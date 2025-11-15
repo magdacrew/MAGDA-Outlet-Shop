@@ -1,11 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Produtos - MAGDA</title>
 </head>
 <body>
-    
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="/static/images/magdawhitelogo.png" alt="Logo Magda">
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="#">Sobre Nós</a></li>
+            <li><a href="/produtos">Produtos</a></li>
+
+            <li>
+                <button class="icon-btn">
+                    <img src="/static/images/carrinho.png" alt="Carrinho">
+                </button>
+            </li>
+
+            <li>
+                <button class="user-btn">
+                    <img src="/static/images/usuario.png" alt="Usuário">
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <section class="produtos-section">
+        <h1 class="titulo-pagina">Nossos Produtos</h1>
+
+        <div class="produtos-grid">
+
+            {% for produto in produtos %}
+            <div class="produto-card">
+                <img src="{{ produto.img }}" alt="{{ produto.nome }}">
+                <h3>{{ produto.nome }}</h3>
+                <p class="preco">R$ {{ produto.preco }}</p>
+                <button class="btn-comprar">Comprar</button>
+            </div>
+            {% endfor %}
+
+        </div>
+    </section>
+
 </body>
 </html>

@@ -26,5 +26,13 @@ def contato():
 def produtos():
     return render_template("produtos.html")
 
+@app.route("/carrinho")
+def carrinho():
+    return render_template("carrinho.html")
+
+@app.route("/usuario")
+def usuario():
+    return render_template("usuario.html")
+
 if __name__ == "__main__":
     app.run(debug=True)
