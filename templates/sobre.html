@@ -1,11 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sobre • MAGDA Crew</title>
+
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-    
+     <!-- NAVBAR -->
+     {% include 'components/header.html' %}
+     <!--BANNER📃-->
+     
+    <div class="container margin-top-50">
+        <h1>Sobre a MAGDA Crew</h1>
+
+        <p>Fundada em Joinville – Santa Catarina, a MAGDA Crew nasceu com o propósito de levar a estética streetwear para todos que valorizam identidade, atitude e expressão própria. Mesmo sendo jovem, a marca cresce rapidamente e já se destaca pelo compromisso em entregar peças acessíveis, modernas e alinhadas às tendências urbanas.</p>
+
+        <p>Inspirada pela cultura de rua, pela criatividade e pelo estilo de vida das novas gerações, a MAGDA Crew busca representar o cotidiano brasileiro através de roupas que combinam conforto, design e personalidade. Cada coleção reflete a vivência das ruas, a improvisação, a autenticidade e a força cultural que moldam nosso público.</p>
+
+        <p>Da vibe do skate às influências da moda urbana contemporânea, seguimos expandindo nossa presença e conquistando espaço em diversas regiões do país.</p>
+
+        <p>A MAGDA Crew é mais que roupa — é estilo, é movimento, é rua.</p>
+    </div>
+
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

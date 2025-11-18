@@ -99,21 +99,6 @@ CREATE TABLE itens_venda (
     FOREIGN KEY (cor_id) REFERENCES cores(id)
 );
 
-
-
-
-CREATE TABLE clientes(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    senha VARCHAR(255) NOT NULL,
-    telefone VARCHAR(15),
-    endereco TEXT
-
-
-);
-
-
 /*
 Exemplo de inserção de produtos no estoque:
 */
@@ -125,8 +110,9 @@ INSERT INTO estoque(produto_id, tamanho_id, cor_id, quantidade) VALUES
 /*
 Exemplo de inserção de produtos:
 */
+
 INSERT INTO produtos(nome, descricao, preco, categoria_id,imagem) VALUES
-('Camiseta Básica', 'Camiseta de algodão básica disponível em várias cores e tamanhos.', 29.90, 1,'static/images/MAGDAtee.png'),
+('Camiseta Básica', 'Camiseta de algodão básica disponível em várias cores e tamanhos.', 29.90, 1,'static/uploads/MAGDAtee.png'),
 ('Casaco Jeans', 'Casaco jeans estiloso para todas as ocasiões.', 99.90, 2),
 ('Calça Chino', 'Calça chino confortável e elegante.', 79.90, 3),
 ('Bermuda Casual', 'Bermuda casual perfeita para o verão.', 49.90, 4),

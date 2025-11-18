@@ -5,53 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <title>MAGDA CREW</title>
+
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 <body>
-     <!-- NAVBAR TRANSPARENTE -->
-     {% extends 'header.html' %}
-        <!-- BANNER -->
-        <div class="hero-section">
-            <div class="hero-content">
-                <img src ="static/images/magdawhitelogo.png" alt="Logo Magda" class="hero-logo">
-                <p>Moda acessível com estilo para todos os públicos.</p>
-                <a href="produtos.html" class="hero-button">Explorar Produtos</a>
-            </div>
+  <!-- NAVBAR -->
+  {% include 'components/header.html' %}
+  <!-- BANNER -->
+  <div class="hero-section">
+      <div class="hero-content">
+          <img src ="static/images/magdawhitelogo.png" alt="Logo Magda" class="hero-logo">
+          <p>Moda acessível com estilo para todos os públicos.</p>
+          <a href="/produtos" class="hero-button">Explorar Produtos</a>
+      </div>
+  </div>
+  <!-- BENEFÍCIOS -->
+  <section class="beneficios">
+    <div class="container">
+      <section class="beneficios-section">
+        <H2>Vantagens Exclusivas</H2>
+      <div class="beneficios-container">
+  
+        <div class="beneficio-card">
+          <img src="static/images/envio.png">
+          <h5>Frete Grátis</h5>
+          <p>Em compras a partir de R$599,90 para Joinville</p>
         </div>
-    <header>
-    </header>
-    <!-- Seção de Benefícios -->
-    <section class="benefits-section">
-        <div class="container">
-            <div class="benefits-grid">
-                <!-- Benefício 1 - Envio -->
-                <div class="benefit-item">
-                    <div class="benefit-icon">
-                        <img src="static/images/envio.png" alt="Envio Rápido">
-                    </div>
-                    <h3>Envio Rápido</h3>
-                    <p>Entregamos em todo o país com rapidez e segurança</p>
-                </div>
-
-                <!-- Benefício 2 - Carrinho -->
-                <div class="benefit-item">
-                    <div class="benefit-icon">
-                        <img src="static/images/cartão.png" alt="Cartão de Crédito">
-                    </div>
-                    <h3>Compra Segura</h3>
-                    <p>Parcelemos em até 5x sem juros</p>
-                </div>
-
-                <!-- Benefício 3 - Dinheiro -->
-                <div class="benefit-item">
-                    <div class="benefit-icon">
-                        <img src="static/images/dinheiro.png" alt="Melhor Preço">
-                    </div>
-                    <h3>Melhor Preço</h3>
-                    <p>Garantimos os melhores preços do mercado</p>
-                </div>
-            </div>
-    </section>
+  
+        <div class="beneficio-card">
+          <img src="static/images/dinheiro.png">
+          <h5>Pague com PIX</h5>
+          <p>5% de desconto no pagamento via PIX</p>
+        </div>
+  
+        <div class="beneficio-card">
+          <img src="static/images/cartão.png">
+          <h5>Parcele no Cartão</h5>
+          <p>Até 3x sem juros no cartão de crédito</p>
+        </div>
+  </section>
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

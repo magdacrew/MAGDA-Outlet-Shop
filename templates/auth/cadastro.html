@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro • MAGDA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+      <!-- NAVBAR -->
+  {% include 'components/header.html' %}
+</head>
+<body>
+
+<section class="section">
+    <div class="form-container">
+
+        <!-- Coluna esquerda -->
+        <div class="column">
+            <h2>Criar conta</h2>
+
+            <form action="/cadastro" method="POST">
+
+                <label>Nome completo</label>
+                <input type="text" name="nome_completo" required>
+
+                <label>E-mail</label>
+                <input type="email" name="email" required>
+
+                <label>Telefone</label>
+                <input type="tel" name="telefone" required>
+
+            </form>
+        </div>
+
+        <!-- Coluna direita -->
+        <div class="column">
+            <h2 style="visibility:hidden;">.</h2> <!-- alinhamento -->
+
+            <form action="/cadastro" method="POST">
+
+                <label>CPF</label>
+                <input type="text" name="cpf" required>
+
+                <label>Data de Nascimento</label>
+                <input type="date" name="nascimento" required>
+
+                <label>Senha</label>
+                <input type="password" name="senha" required>
+
+                <label>Confirmar senha</label>
+                <input type="password" name="confirmar" required>
+
+                <button type="submit">Cadastrar</button>
+
+                <div class="bottom-link">
+                    Já possui conta? <a href="/login">Entrar</a>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</section>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

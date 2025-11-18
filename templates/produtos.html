@@ -3,52 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
-    <title>Produtos - MAGDA</title>
+    <title>Produtos • MAGDA CREW</title>
 </head>
 <body>
+    <h1>Produtos </h1>
 
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <div class="logo">
-            <img src="/static/images/magdawhitelogo.png" alt="Logo Magda">
-        </div>
+    <a href="/novo_produto" class="">Cadastrar Produto</a>
 
-        <ul class="nav-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="#">Sobre Nós</a></li>
-            <li><a href="/produtos">Produtos</a></li>
-
-            <li>
-                <button class="icon-btn">
-                    <img src="/static/images/carrinho.png" alt="Carrinho">
-                </button>
-            </li>
-
-            <li>
-                <button class="user-btn">
-                    <img src="/static/images/usuario.png" alt="Usuário">
-                </button>
-            </li>
-        </ul>
-    </nav>
-
-    <section class="produtos-section">
-        <h1 class="titulo-pagina">Nossos Produtos</h1>
-
-        <div class="produtos-grid">
-
-            {% for produto in produtos %}
-            <div class="produto-card">
-                <img src="{{ produto.img }}" alt="{{ produto.nome }}">
-                <h3>{{ produto.nome }}</h3>
-                <p class="preco">R$ {{ produto.preco }}</p>
-                <button class="btn-comprar">Comprar</button>
-            </div>
-            {% endfor %}
-
-        </div>
-    </section>
-
+    <table class="">
+        <tr>
+            <th>Título</th>
+            <th>Gênero</th>
+            <th>Ano</th>
+            <th>Avaliação</th>
+            <th>Ações</th>
+        </tr>
+        {% for filme in filmes %}
+        <tr>
+            <td>{{ filme.titulo }}</td>
+            <td>{{ filme.genero }}</td>
+            <td>{{ filme.ano }}</td>
+            <td>{{ filme.avaliacao }}</td>
+            <td>
+                <a href="/editar/{{ filme.id }}">
+                    <img src="/static/images/editar.png" alt="Editar" style="width:20px; height:20px;">
+                </a>
+                <a href="/excluir/{{ filme.id }}">
+                    <img src="/static/images/excluir.png" alt="Excluir" style="width:20px; height:20px;">
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>
