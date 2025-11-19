@@ -3,106 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login • MAGDA CREW</title>
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .card {
-            background: #fff;
-            padding: 30px;
-            width: 350px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            background: #fafafa;
-            transition: 0.2s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #333;
-            background: #fff;
-        }
-
-        button {
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            background: #000;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background: #333;
-        }
-
-        .link-cadastro {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        .link-cadastro a {
-            color: #000;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .link-cadastro a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <title>Login • MAGDA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    {% include 'components/header.html' %}
 </head>
+
 <body>
 
-    <div class="card">
-        <h2>Login</h2>
+<section class="section">
+    <div class="login-container">
+
+        <h2>Entrar na conta</h2>
 
         <form action="/login" method="POST">
-            <input type="email" name="email" placeholder="E-mail" required>
-            <input type="password" name="senha" placeholder="Senha" required>
+
+            <label>E-mail:</label>
+            <input type="email" name="email" required>
+
+            <label>Senha:</label>
+            <input type="password" name="senha" required>
 
             <button type="submit">Entrar</button>
+            <div class="bottom-link">
+                Não possui conta? <a href="/cadastro">Criar conta</a>
+            </div>
+
         </form>
-
-        <div class="link-cadastro">
-            Não tem conta? <a href="/cadastro">Cadastre-se</a>
-        </div>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
-
+</section>
+<!-- Footer -->
+{% include 'components/footer.html' %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

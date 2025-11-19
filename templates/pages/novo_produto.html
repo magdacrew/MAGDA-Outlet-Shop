@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Produto • MAGDA CREW</title>
+</head>
+<body>
+    
+    <form method="POST" action="/salvar">
+        <div class="container">
+            <h1>Novo Produto</h1>
+            <label>Nome:</label>
+            <input type="text" name="nome" required>
+            <label>Descrição:</label>
+            <input type="text" name="descricao" required>
+            <label>Preço:</label>
+            <input type="number" name="preco" required>
+            <label>Categoria:</label>
+            <input type="number" name="categoria_id" required>
+            <label>Imagem (/static/uploads/):</label>
+            <input type="text" name="imagem" placeholder="/static/uploads/st-p-tkf-signature-c-9-4be7cb8bf600c621ed17368887554641-240-0.webp">
+
+
+            <h1>Adicionar ao Estoque</h1>
+            <label>Tamanho:</label>
+            <select name="tamanho_id" required>
+                <option value="1">PP</option>
+                <option value="2">P</option>
+                <option value="3">M</option>
+                <option value="4">G</option>
+                <option value="5">GG</option>
+                <option value="6">XGG</option>
+            </select>
+            <label>Cor:</label>
+            <select name="cor_id" required>
+                <option value="1">Preto</option>
+                <option value="2">Branco</option>
+                <option value="3">Cinza</option>
+                <option value="4">Vermelho</option>
+                <option value="5">Azul</option>
+                <option value="6">Verde</option>
+                <option value="7">Amarelo</option>
+                <option value="8">Rosa</option>
+                <option value="9">Roxo</option>
+                <option value="10">Bege</option>
+                <option value="11">Marrom</option>
+                <option value="12">Laranja</option>
+            </select>
+            <label>Quantidade:</label>
+            <input type="number" name="quantidade" required>
+
+            <button type="submit">Salvar</button>
+        </div>
+    </form>
+
+</body>
+</html>

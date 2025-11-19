@@ -51,7 +51,7 @@ CREATE TABLE clientes(
 
 CREATE TABLE produtos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
+    nome VARCHAR(100) NOT NULL UNIQUE,
     descricao TEXT,
     preco DECIMAL(10, 2) NOT NULL,
     categoria_id INT,
@@ -138,3 +138,5 @@ Exemplo de Cadastro de clientes:
 INSERT INTO clientes(nome,email,telefone,cpf,data_nascimento)
 VALUES 
 ('Adrian Holz','holzadrian8@gmail.com','(47) 99784-5924','148.060.359-71','2008-06-06')
+
+

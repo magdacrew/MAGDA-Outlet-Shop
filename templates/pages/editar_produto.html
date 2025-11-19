@@ -2,24 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novo Produto • MAGDA CREW</title>
+    <title>Editar Produto</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; text-align: center; }
+        form { background: white; padding: 20px; margin: 40px auto; width: 300px; border-radius: 8px; }
+        label { display: block; margin-top: 10px; }
+        input { width: 90%; padding: 6px; }
+        button {
+            margin-top: 15px; padding: 8px 15px;
+            background: #f1c40f; color: white; border: none; border-radius: 5px;
+        }
+        a { display: block; margin-top: 10px; color: #3498db; }
+    </style>
 </head>
 <body>
-    
-    <form method="POST" action="/salvar">
-        <div class="container">
-            <h1>Novo Produto</h1>
-            <label>Nome:</label>
-            <input type="text" name="nome" required>
-            <label>Descrição:</label>
-            <input type="text" name="descricao" required>
-            <label>Preço:</label>
-            <input type="number" name="preco" required>
-            <label>Categoria:</label>
-            <input type="number" name="categoria_id" required>
 
-            <h1>Adicionar ao Estoque</h1>
+    <form method="POST" action="/atualizar/{{ produto.id }}">
+        <div class="container">
+            <h1>Editar Produto</h1>
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ produto.nome }}" required>
+            <label>Descrição:</label>
+            <input type="text" name="descricao" value="{{ produto.descricao }}" required>
+            <label>Preço:</label>
+            <input type="number" name="preco" value="{{ produto.preco }}" required>
+            <label>Categoria:</label>
+            <input type="number" name="categoria" value="{{ produto.categoria }}" required>
+
+            <h1>Editar Estoque</h1>
             <label>Tamanho:</label>
             <select name="tamanho_id" required>
                 <option value="1">PP</option>
@@ -47,7 +57,7 @@
             <label>Quantidade:</label>
             <input type="number" name="quantidade" required>
 
-            <button type="submit">Salvar</button>
+            <button type="submit">Atualizar</button>
         </div>
     </form>
 
