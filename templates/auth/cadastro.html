@@ -5,13 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro • MAGDA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-      <!-- NAVBAR -->
-  {% include 'components/header.html' %}
+    <!-- NAVBAR -->
+    {% include 'layouts/navbar.html' %}
 </head>
 <body>
 
 <section class="section">
     <div class="form-container">
+
+        <!-- Mensagens Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
         <!-- Coluna esquerda -->
         <div class="column">
@@ -19,35 +30,32 @@
 
             <form action="/cadastro" method="POST">
 
-                <label>Nome completo</label>
-                <input type="text" name="nome_completo" required>
+                <label for="nome_completo">Nome completo</label>
+                <input type="text" id="nome_completo" name="nome_completo" value="{{ request.form.nome_completo if request.form }}" required>
 
-                <label>E-mail</label>
-                <input type="email" name="email" required>
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" value="{{ request.form.email if request.form }}" required>
 
-                <label>Telefone</label>
-                <input type="tel" name="telefone" required>
+                <label for="telefone">Telefone</label>
+                <input type="tel" id="telefone" name="telefone" value="{{ request.form.telefone if request.form }}" placeholder="(11) 99999-9999" required>
 
-            </form>
         </div>
 
         <!-- Coluna direita -->
         <div class="column">
             <h2 style="visibility:hidden;">.</h2> <!-- alinhamento -->
 
-            <form action="/cadastro" method="POST">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" value="{{ request.form.cpf if request.form }}" placeholder="000.000.000-00" required>
 
-                <label>CPF</label>
-                <input type="text" name="cpf" required>
+                <label for="nascimento">Data de Nascimento</label>
+                <input type="date" id="nascimento" name="nascimento" value="{{ request.form.nascimento if request.form }}" required>
 
-                <label>Data de Nascimento</label>
-                <input type="date" name="nascimento" required>
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required minlength="6">
 
-                <label>Senha</label>
-                <input type="password" name="senha" required>
-
-                <label>Confirmar senha</label>
-                <input type="password" name="confirmar" required>
+                <label for="confirmar">Confirmar senha</label>
+                <input type="password" id="confirmar" name="confirmar" required>
 
                 <button type="submit">Cadastrar</button>
 
@@ -60,8 +68,33 @@
 
     </div>
 </section>
+
 <!-- Footer -->
-{% include 'components/footer.html' %}
+{% include 'layouts/footer.html' %}
 <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+<script>
+// Máscara para CPF
+document.getElementById('cpf').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Máscara para telefone
+document.getElementById('telefone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = value;
+    }
+});
+</script>
+
 </body>
 </html>

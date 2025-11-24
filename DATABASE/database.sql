@@ -39,6 +39,17 @@ INSERT INTO tamanhos(nome) VALUES
 ('GG'),
 ('XGG'); 
 
+CREATE TABLE usuarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome_completo VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    telefone VARCHAR(20),
+    cpf VARCHAR(14) UNIQUE,
+    nascimento DATE NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE clientes(
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
@@ -56,6 +67,7 @@ CREATE TABLE produtos (
     preco DECIMAL(10, 2) NOT NULL,
     categoria_id INT,
     imagem VARCHAR(255),
+    destaque BOOLEAN NOT NULL DEFAULT FALSE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (categoria_id) REFERENCES categorias(id)
     

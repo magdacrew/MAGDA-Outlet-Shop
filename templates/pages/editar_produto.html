@@ -26,12 +26,24 @@
             <input type="text" name="descricao" value="{{ produto.descricao }}" required>
             <label>Preço:</label>
             <input type="number" name="preco" value="{{ produto.preco }}" required>
-            <label>Categoria:</label>
-            <input type="number" name="categoria" value="{{ produto.categoria }}" required>
+            <select name="categoria_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
+                <option value="1">Camisetas</option>
+                <option value="2">Casacos</option>
+                <option value="3">Calças</option>
+                <option value="4">Bermudas</option>
+                <option value="5">Acessórios</option>
+            <label for="destaque">Destaque:</label>
+            <select name="destaque" id="destaque" required>
+            <option value="FALSE" {% if not produto.destaque %}selected{% endif %}>Não</option>
+            <option value="TRUE" {% if produto.destaque %}selected{% endif %}>Sim</option>
+            </select>
+            <input type="file" name="imagem">
 
             <h1>Editar Estoque</h1>
             <label>Tamanho:</label>
             <select name="tamanho_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
                 <option value="1">PP</option>
                 <option value="2">P</option>
                 <option value="3">M</option>
@@ -41,6 +53,7 @@
             </select>
             <label>Cor:</label>
             <select name="cor_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
                 <option value="1">Preto</option>
                 <option value="2">Branco</option>
                 <option value="3">Cinza</option>

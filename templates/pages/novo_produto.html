@@ -7,7 +7,7 @@
 </head>
 <body>
     
-    <form method="POST" action="/salvar">
+    <form method="POST" action="/salvar" enctype="multipart/form-data">
         <div class="container">
             <h1>Novo Produto</h1>
             <label>Nome:</label>
@@ -15,16 +15,28 @@
             <label>Descrição:</label>
             <input type="text" name="descricao" required>
             <label>Preço:</label>
-            <input type="number" name="preco" required>
+            <input type="number" name="preco" step="0.01" required>
             <label>Categoria:</label>
-            <input type="number" name="categoria_id" required>
-            <label>Imagem (/static/uploads/):</label>
-            <input type="text" name="imagem" placeholder="/static/uploads/st-p-tkf-signature-c-9-4be7cb8bf600c621ed17368887554641-240-0.webp">
+            <select name="categoria_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
+                <option value="1">Camisetas</option>
+                <option value="2">Casacos</option>
+                <option value="3">Calças</option>
+                <option value="4">Bermudas</option>
+                <option value="5">Acessórios</option>
+            <input type="file" name="imagem">
+            <label for="destaque">Destaque:</label>
+            <select name="destaque" id="destaque" required>
+                <option value="" selected disabled>Selecione uma opção</option>
+                <option value="TRUE">Sim</option>
+                <option value="FALSE">Não</option>
+            </select>
 
 
             <h1>Adicionar ao Estoque</h1>
             <label>Tamanho:</label>
             <select name="tamanho_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
                 <option value="1">PP</option>
                 <option value="2">P</option>
                 <option value="3">M</option>
@@ -34,6 +46,7 @@
             </select>
             <label>Cor:</label>
             <select name="cor_id" required>
+                <option value="" selected disabled>Selecione uma opção</option>
                 <option value="1">Preto</option>
                 <option value="2">Branco</option>
                 <option value="3">Cinza</option>

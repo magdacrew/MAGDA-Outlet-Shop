@@ -6,7 +6,7 @@
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <title>Login • MAGDA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
-    {% include 'components/header.html' %}
+    {% include 'layouts/navbar.html' %}
 </head>
 
 <body>
@@ -14,12 +14,23 @@
 <section class="section">
     <div class="login-container">
 
+        <!-- Mensagens Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <h2>Entrar na conta</h2>
 
         <form action="/login" method="POST">
 
             <label>E-mail:</label>
-            <input type="email" name="email" required>
+            <input type="email" name="email" value="{{ request.form.email if request.form }}" required>
 
             <label>Senha:</label>
             <input type="password" name="senha" required>
@@ -32,8 +43,9 @@
         </form>
     </div>
 </section>
+
 <!-- Footer -->
-{% include 'components/footer.html' %}
+{% include 'layouts/footer.html' %}
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

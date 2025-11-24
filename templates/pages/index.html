@@ -8,7 +8,6 @@
 
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 
 <body>
@@ -28,37 +27,81 @@
     <!-- BENEFÍCIOS -->
     <section class="beneficios">
         <div class="container">
-
             <section class="beneficios-section">
                 <h2>Vantagens Exclusivas</h2>
-
                 <div class="beneficios-container">
-
                     <div class="beneficio-card">
                         <img src="static/images/envio.png" alt="Frete">
                         <h5>Frete Grátis</h5>
                         <p>Em compras a partir de R$599,90 para Joinville</p>
                     </div>
-
                     <div class="beneficio-card">
                         <img src="static/images/dinheiro.png" alt="PIX">
                         <h5>Pague com PIX</h5>
                         <p>5% de desconto no pagamento via PIX</p>
                     </div>
-
                     <div class="beneficio-card">
                         <img src="static/images/cartão.png" alt="Cartão">
                         <h5>Parcele no Cartão</h5>
                         <p>Até 3x sem juros no cartão de crédito</p>
                     </div>
-
                 </div>
             </section>
-
         </div>
     </section>
 
-    <!-- FOOTER MONSTRO -->
+    <!-- SEÇÃO DE DESTAQUES -->
+    <section class="destaques-section">
+        <div class="container">
+            <h2 class="destaques-title">Destaques</h2>
+            
+            <div class="carrossel-container">
+                <div class="carrossel-wrapper">
+                    <div class="carrossel-track" id="carrosselTrack">
+                        {% for produto in produtos_destaque %}
+                        <div class="carrossel-item">
+                            <div class="card">
+                                <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                                alt="Produto">
+                                <div class="produto-nome">{{ produto.nome }}</div>
+                                <div class="produto-preco">
+                                    R$ {{ "%.2f"|format(produto.preco) }}
+                                </div>
+                                <button class="btn-comprar">COMPRAR</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not produtos_destaque %}
+                        <div class="carrossel-item">
+                            <div class="card">
+                                <img src="{{ url_for('static', filename='images/default.png') }}" alt="Sem produtos">
+                                <div class="produto-nome">Nenhum produto em destaque</div>
+                                <div class="produto-preco">R$ 0,00</div>
+                                <button class="btn-comprar" disabled>INDISPONÍVEL</button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Botões de navegação -->
+                <button class="carrossel-btn carrossel-prev" id="prevBtn" aria-label="Produto anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carrossel-btn carrossel-next" id="nextBtn" aria-label="Próximo produto">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <!-- Indicadores -->
+            <div class="carrossel-indicators" id="carrosselIndicators">
+                <!-- Os indicadores serão gerados via JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
     {% include 'layouts/footer.html' %}
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
