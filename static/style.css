@@ -794,7 +794,7 @@ button {
     margin-top: 10px;
     padding: 12px;
     border: none;
-    background: linear-gradient(135deg, #000000, #181c22);
+    background: linear-gradient(10deg, #000000, #181c22);
     color: white;
     border-radius: 18px;
     font-size: 15px;
@@ -1157,3 +1157,183 @@ button:hover {
     color: #0c5460;
     border: 1px solid #bee5eb;
 }
+/*USUARIO🟢*/
+/* ===== WRAPPER GERAL (ISOLA TUDO) ===== */
+.conta-wrapper {
+    margin-top: 150px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.conta-container {
+    width: 90%;
+    max-width: 1250px;
+    display: flex;
+    gap: 35px;
+    align-items: flex-start;
+}
+
+/* ===== CARD ===== */
+.conta-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 25px 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    width: 100%;
+}
+
+.user-card {
+    flex: 1.3;
+}
+
+.pedidos-card {
+    flex: 1;
+}
+
+/* ===== TÍTULOS ===== */
+.conta-card h2 {
+    font-size: 20px;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* ===== DESCRIÇÃO ===== */
+.conta-descricao {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* ===== INFORMAÇÕES ===== */
+.conta-info {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #222;
+}
+
+.conta-info strong {
+    color: #000;
+}
+
+/* ===== BOTÃO ===== */
+.conta-btn {
+    margin-top: 25px;
+    display: inline-block;
+    padding: 12px 18px;
+    background: #111;
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: 0.25s ease;
+}
+
+.conta-btn:hover {
+    background: #333;
+}
+
+/* ===== SEM PEDIDOS ===== */
+.conta-sem-pedidos {
+    margin-top: 15px;
+    color: #777;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 850px) {
+    .conta-container {
+        flex-direction: column;
+    }
+}
+
+/*NOVO PRODUTO🟢*/
+  /* ======== AJUSTE GLOBAL PARA REMOVER BUG DE NAVBAR ======== */
+body {
+    margin: 0;
+    padding-top: 90px !important; /* empurra tudo para baixo */
+    background: #f4f6f9;
+    font-family: Arial, sans-serif;
+}
+
+/* ======== CONTAINER PRINCIPAL DO NOVO PRODUTO ======== */
+.novo-produto-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 40px 45px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+}
+
+/* TÍTULO CENTRALIZADO */
+.novo-produto-container h2 {
+    font-size: 32px;
+    text-align: center;
+    color: #333;
+    margin-bottom: 35px;
+    font-weight: 600;
+}
+
+/* ======== GRID DO FORMULÁRIO ======== */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.col-span-2 {
+    grid-column: span 2;
+}
+
+/* ======== INPUTS ======== */
+.novo-produto-container label {
+    font-size: 14px;
+    margin-bottom: 6px;
+    display: block;
+    color: #444;
+    font-weight: 500;
+}
+
+.novo-produto-container input,
+.novo-produto-container select,
+.novo-produto-container textarea {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #dcdcdc;
+    background: #fafafa;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.novo-produto-container input:focus,
+.novo-produto-container select:focus,
+.novo-produto-container textarea:focus {
+    background: #fff;
+    border-color: #0066ff;
+    box-shadow: 0 0 0 3px rgba(0,102,255,0.12);
+    outline: none;
+}
+
+.np-btn-buttom{
+    grid-column: span 2;
+    background: #000000;
+    border: none;
+    padding: 10px 20px; /* MENOR */
+    width: 180px;       /* largura reduzida */
+    font-size: 15px;    /* texto menor */
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 15px auto 0; /* centraliza e dá espaço */
+    display: block;
+    transition: 0.2s;
+}
+
+.np-btn-buttom:hover{
+    background: #000000;
+}
+
+

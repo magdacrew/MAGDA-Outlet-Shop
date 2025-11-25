@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produtos • MAGDA CREW</title>
+    <title>Produtos - MAGDA CREW</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -23,8 +23,12 @@
         {% for produto in produtos %}
         <div class="card">
 
-            <a href="/editar_produto/{{ produto.id }}" class="">Editar</a>
-            <img src="/static/images/editar.png" alt="Editar" style="width:20px; height:20px;">
+            <a href="/editar/{{ produto.id }}" class="">
+                <img src="/static/images/editar.png" alt="Editar" style="width:20px; height:20px;">
+            </a>
+            <a href="/excluir_produto/{{ produto.id }}">
+                <img src="/static/images/excluir.png" alt="Excluir" style="width:20px; height:20px;">
+            </a>
             
             <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
             alt="Produto">

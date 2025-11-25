@@ -2,22 +2,11 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Editar Produto</title>
-    <style>
-        body { font-family: Arial; background-color: #f4f4f4; text-align: center; }
-        form { background: white; padding: 20px; margin: 40px auto; width: 300px; border-radius: 8px; }
-        label { display: block; margin-top: 10px; }
-        input { width: 90%; padding: 6px; }
-        button {
-            margin-top: 15px; padding: 8px 15px;
-            background: #f1c40f; color: white; border: none; border-radius: 5px;
-        }
-        a { display: block; margin-top: 10px; color: #3498db; }
-    </style>
+    <title>Editar Produto - MAGDA CREW</title>
 </head>
 <body>
 
-    <form method="POST" action="/atualizar/{{ produto.id }}">
+        <form method="POST" action="/atualizar/{{ produto.id }}" enctype="multipart/form-data">
         <div class="container">
             <h1>Editar Produto</h1>
             <label>Nome:</label>
@@ -25,50 +14,39 @@
             <label>Descrição:</label>
             <input type="text" name="descricao" value="{{ produto.descricao }}" required>
             <label>Preço:</label>
-            <input type="number" name="preco" value="{{ produto.preco }}" required>
+            <input type="number" name="preco" value="{{ produto.preco }}" step = "0.01" required>
+            <label>Categoria:</label>
             <select name="categoria_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">Camisetas</option>
-                <option value="2">Casacos</option>
-                <option value="3">Calças</option>
-                <option value="4">Bermudas</option>
-                <option value="5">Acessórios</option>
+                <option value="" disabled selected>Selecione...</option>
+                {% for categoria in categorias %}
+                <option value={{categoria.id}}>{{ categoria.nome }}</option>
+            {% endfor %}
+            </select>
             <label for="destaque">Destaque:</label>
             <select name="destaque" id="destaque" required>
-            <option value="FALSE" {% if not produto.destaque %}selected{% endif %}>Não</option>
-            <option value="TRUE" {% if produto.destaque %}selected{% endif %}>Sim</option>
+                <option value="" selected disabled>Selecione uma opção</option>
+                <option value="TRUE" {% if produto.destaque == 1 %}selected{% endif %}>Sim</option>
+                <option value="FALSE" {% if produto.destaque == 0 %}selected{% endif %}>Não</option>
             </select>
             <input type="file" name="imagem">
 
             <h1>Editar Estoque</h1>
             <label>Tamanho:</label>
             <select name="tamanho_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">PP</option>
-                <option value="2">P</option>
-                <option value="3">M</option>
-                <option value="4">G</option>
-                <option value="5">GG</option>
-                <option value="6">XGG</option>
+                <option disabled selected>Selecione...</option>
+                {% for tamanho in tamanhos %}
+                    <option value={{tamanho.id}}>{{ tamanho.nome }}</option>
+                {% endfor %}
             </select>
             <label>Cor:</label>
             <select name="cor_id" required>
                 <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">Preto</option>
-                <option value="2">Branco</option>
-                <option value="3">Cinza</option>
-                <option value="4">Vermelho</option>
-                <option value="5">Azul</option>
-                <option value="6">Verde</option>
-                <option value="7">Amarelo</option>
-                <option value="8">Rosa</option>
-                <option value="9">Roxo</option>
-                <option value="10">Bege</option>
-                <option value="11">Marrom</option>
-                <option value="12">Laranja</option>
+                {% for cor in cores %}
+                <option value={{cor.id}}>{{ cor.nome }}</option>
+            {% endfor %}
             </select>
             <label>Quantidade:</label>
-            <input type="number" name="quantidade" required>
+            <input type="number" name="quantidade" value="{{ produto.quantidade }}" required>
 
             <button type="submit">Atualizar</button>
         </div>

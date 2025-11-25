@@ -13,7 +13,7 @@ UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def conectar():
-    return mysql.connector.connect(host='localhost', user='root', password='', port='3406', database='madga_crew')
+    return mysql.connector.connect(host='localhost', user='root', port='3406', database='crew_magda')
 
 @app.route("/")
 def home():
@@ -36,7 +36,6 @@ def home():
 @app.route("/cadastro", methods=['GET', 'POST'])
 def cadastro():
     if request.method == 'POST':
-         # Coletar dados do formulário
         nome_completo = request.form.get('nome_completo', '').strip()
         email = request.form.get('email', '').strip().lower()
         telefone = request.form.get('telefone', '').strip()
@@ -45,7 +44,6 @@ def cadastro():
         senha = request.form.get('senha', '')
         confirmar_senha = request.form.get('confirmar', '')
 
-        # Validações
         erros = []
 
         if not nome_completo:
@@ -63,7 +61,6 @@ def cadastro():
         if not nascimento:
             erros.append('Data de nascimento é obrigatória.')
         else:
-            # Verificar se é maior de 18 anos
             nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
             idade = (datetime.now() - nascimento_date).days // 365
             if idade < 18:
@@ -84,22 +81,18 @@ def cadastro():
             conexao = conectar()
             cursor = conexao.cursor()
 
-            # Verificar se email já existe
             cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
             if cursor.fetchone():
                 flash('Este e-mail já está cadastrado.', 'error')
                 return render_template("auth/cadastro.html")
 
-            # Verificar se CPF já existe
             cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
             if cursor.fetchone():
                 flash('Este CPF já está cadastrado.', 'error')
                 return render_template("auth/cadastro.html")
 
-            # Hash da senha
             senha_hash = generate_password_hash(senha)
 
-            # Inserir usuário
             sql_inserir = """
                 INSERT INTO usuarios 
                 (nome_completo, email, telefone, cpf, nascimento, senha_hash)
@@ -108,13 +101,11 @@ def cadastro():
             cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento, senha_hash))
             conexao.commit()
 
-            # Obter o ID do usuário recém-criado
             usuario_id = cursor.lastrowid
 
             cursor.close()
             conexao.close()
 
-            # Auto-login após cadastro
             session['usuario_id'] = usuario_id
             session['usuario_nome'] = nome_completo
             session['usuario_email'] = email
@@ -128,7 +119,6 @@ def cadastro():
         except Exception as e:
             flash(f'Erro inesperado: {str(e)}', 'error')
             return render_template("auth/cadastro.html")
-             # GET request - apenas mostrar o formulário
     return render_template("auth/cadastro.html")
 
 
@@ -185,7 +175,34 @@ def logout():
 
 @app.route("/usuario")
 def usuario():
-    return render_template("/auth/usuario.html")
+    if "usuario_id" not in session:
+        flash("Você precisa estar logado para acessar sua conta.", "error")
+        return redirect("/login")
+    
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT id, nome_completo, email, telefone, cpf, nascimento, data_cadastro
+            FROM usuarios
+            WHERE id = %s
+        """, (session["usuario_id"],))
+
+        usuario = cursor.fetchone()
+
+        cursor.close()
+        conexao.close()
+
+        if not usuario:
+            flash("Usuário não encontrado.", "error")
+            return redirect("/login")
+
+        return render_template("/auth/usuario.html", usuario=usuario)
+
+    except Exception as e:
+        flash(f"Erro ao carregar informações: {str(e)}", "error")
+        return redirect("/")
 
 @app.route("/sobre")
 def about():
@@ -219,7 +236,28 @@ def carrinho():
 
 @app.route("/novo_produto")
 def novo_produto():
-    return render_template("/pages/novo_produto.html")
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT c.id, c.nome FROM cores c")
+    cores = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT t.id, t.nome FROM tamanhos t")
+    tamanhos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT c.id, c.nome FROM categorias c")
+    categorias = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    return render_template("/pages/novo_produto.html", produtos=produtos, cores=cores, tamanhos=tamanhos, categorias=categorias)
 
 @app.route("/salvar", methods=['POST'])
 def salvar_produto():
@@ -255,7 +293,7 @@ def salvar_produto():
         return "Erro: Tipos inválidos (preço/quantidade/ids).", 400
 
     conexao = conectar()
-    cursor = conexao.cursor()
+    cursor = conexao.cursor(dictionary=True)
 
     try:
         sql_produto_ins = """
@@ -282,10 +320,30 @@ def salvar_produto():
 
     return redirect("/produtos")
 
-@app.route("/editar_produto/<int:id>")
+@app.route("/editar/<int:id>")
 def editar_produto(id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT c.id, c.nome FROM cores c")
+    cores = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT t.id, t.nome FROM tamanhos t")
+    tamanhos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT c.id, c.nome FROM categorias c")
+    categorias = cursor.fetchall()
+    cursor.close()
+    conexao.close()
     try:
-        conexao = mysql.connector.connect()
+        conexao = conectar()
         cursor = conexao.cursor(dictionary=True)
         
         cursor.execute("""
@@ -302,7 +360,7 @@ def editar_produto(id):
         if not produto:
             return "Produto não encontrado", 404
             
-        return render_template("/pages/editar_produto.html", produto=produto)
+        return render_template("/pages/editar_produto.html", produto=produto, cores=cores, tamanhos=tamanhos, categorias=categorias)
         
     except Exception as e:
         return f"Erro ao buscar produto: {str(e)}", 500
@@ -338,7 +396,7 @@ def atualizar_produto(id):
             imagem_nome = secure_filename(imagem_file.filename)
             imagem_file.save(os.path.join(app.config["UPLOAD_FOLDER"], imagem_nome))
         
-        conexao = mysql.connector.connect()
+        conexao = conectar()
         cursor = conexao.cursor()
 
         if imagem_nome:
@@ -362,8 +420,10 @@ def atualizar_produto(id):
         cursor.execute(sql_estoque, (tamanho_id, cor_id, quantidade, id))
 
         if cursor.rowcount == 0:
-            return "Erro: Registro de estoque não encontrado para este produto", 404
-
+            cursor.execute("""
+            INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
+            VALUES (%s, %s, %s, %s)
+            """, (id, tamanho_id, cor_id, quantidade))
         conexao.commit()
         cursor.close()
         conexao.close()
@@ -375,18 +435,37 @@ def atualizar_produto(id):
             conexao.rollback()
             conexao.close()
         return f"Erro ao atualizar produto: {str(e)}", 500
+
+
+@app.route("/excluir_produto/<int:id>")
+def excluir_produto(id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    try:
+        sql_estoque = "DELETE FROM estoque WHERE produto_id = %s"
+        cursor.execute(sql_estoque, (id,))
+        
+        sql_produto = "DELETE FROM produtos WHERE id = %s"
+        cursor.execute(sql_produto, (id,))
+        
+        conexao.commit()
+    except Exception as e:
+        conexao.rollback()
+        return f"Erro ao excluir produto: {str(e)}", 500
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    return redirect("/produtos")
     
 @app.route("/produto/<int:id>/destaque", methods=['POST'])
 def toggle_destaque(id):
-    # Verificar se é admin (implemente sua lógica de autenticação)
-    # if not session.get('admin'):
-    #     return redirect('/login')
     
     conexao = conectar()
     cursor = conexao.cursor()
     
     try:
-        # Alternar o status de destaque
         sql = "UPDATE produtos SET destaque = NOT destaque WHERE id = %s"
         cursor.execute(sql, (id,))
         conexao.commit()

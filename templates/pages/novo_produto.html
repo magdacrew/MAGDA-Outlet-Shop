@@ -3,69 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novo Produto • MAGDA CREW</title>
+    <title>Novo Produto - MAGDA CREW</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    
-    <form method="POST" action="/salvar" enctype="multipart/form-data">
-        <div class="container">
-            <h1>Novo Produto</h1>
-            <label>Nome:</label>
-            <input type="text" name="nome" required>
-            <label>Descrição:</label>
-            <input type="text" name="descricao" required>
-            <label>Preço:</label>
-            <input type="number" name="preco" step="0.01" required>
-            <label>Categoria:</label>
-            <select name="categoria_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">Camisetas</option>
-                <option value="2">Casacos</option>
-                <option value="3">Calças</option>
-                <option value="4">Bermudas</option>
-                <option value="5">Acessórios</option>
-            <input type="file" name="imagem">
-            <label for="destaque">Destaque:</label>
-            <select name="destaque" id="destaque" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="TRUE">Sim</option>
-                <option value="FALSE">Não</option>
-            </select>
+<body class="novo-produto-body">
+    <div class="np-wrapper">
+        {% include 'layouts/navbar.html' %}
+        <h1 class="np-title">Adicionar novo produto</h1>
 
+        <form method="POST" action="/salvar" enctype="multipart/form-data" class="np-card">
 
-            <h1>Adicionar ao Estoque</h1>
-            <label>Tamanho:</label>
-            <select name="tamanho_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">PP</option>
-                <option value="2">P</option>
-                <option value="3">M</option>
-                <option value="4">G</option>
-                <option value="5">GG</option>
-                <option value="6">XGG</option>
-            </select>
-            <label>Cor:</label>
-            <select name="cor_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="1">Preto</option>
-                <option value="2">Branco</option>
-                <option value="3">Cinza</option>
-                <option value="4">Vermelho</option>
-                <option value="5">Azul</option>
-                <option value="6">Verde</option>
-                <option value="7">Amarelo</option>
-                <option value="8">Rosa</option>
-                <option value="9">Roxo</option>
-                <option value="10">Bege</option>
-                <option value="11">Marrom</option>
-                <option value="12">Laranja</option>
-            </select>
-            <label>Quantidade:</label>
-            <input type="number" name="quantidade" required>
+            <div class="np-group">
+                <label>Nome do produto</label>
+                <input type="text" name="nome" required>
+            </div>
 
-            <button type="submit">Salvar</button>
-        </div>
-    </form>
+            <div class="np-group">
+                <label>Descrição</label>
+                <input type="text" name="descricao" required>
+            </div>
 
+            <div class="np-group">
+                <label>Preço</label>
+                <input type="number" name="preco" step="0.01" required>
+            </div>
+
+            <div class="np-group">
+                <label>Categoria</label>
+                <select name="categoria_id" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    {% for categoria in categorias %}
+                    <option value={{categoria.id}}>{{ categoria.nome }}</option>
+                {% endfor %}
+                </select>
+            </div>
+
+            <div class="np-group">
+                <label>Imagem</label>
+                <input type="file" name="imagem">
+            </div>
+
+            <div class="np-group">
+                <label>Destaque</label>
+                <select name="destaque" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    <option value="TRUE">Sim</option>
+                    <option value="FALSE">Não</option>
+                </select>
+            </div>
+
+            <h2 class="np-subtitle">Adicionar ao Estoque</h2>
+
+            <div class="np-grid">
+                <div class="np-group">
+                    <label>Tamanho</label>
+                    <select name="tamanho_id" required>
+                        <option disabled selected>Selecione...</option>
+                        {% for tamanho in tamanhos %}
+                            <option value={{tamanho.id}}>{{ tamanho.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="np-group">
+                    <label>Cor</label>
+                    <select name="cor_id" required>
+                        <option disabled selected>Selecione...</option>
+                        {% for cor in cores %}
+                            <option value={{cor.id}}>{{ cor.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="np-group">
+                    <label>Quantidade</label>
+                    <input type="number" name="quantidade" required>
+                </div>
+            </div>
+
+            <button type="submit" class="np-btn">Salvar Produto</button>
+
+    </div>
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

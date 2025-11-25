@@ -2,6 +2,7 @@ CREATE TABLE categorias (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(100) NOT NULL
 );
+
 INSERT INTO categorias(nome) VALUES 
  ('Camisetas'),
  ('Casacos'),
@@ -13,6 +14,7 @@ CREATE TABLE cores(
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(50) NOT NULL
 );
+
 INSERT INTO cores(nome) VALUES 
 ('Preto'),
 ('Branco'),
@@ -50,16 +52,6 @@ CREATE TABLE usuarios (
     data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE clientes(
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    nome VARCHAR(150) NOT NULL,
-    email VARCHAR(150) UNIQUE,
-    telefone VARCHAR(20),
-    cpf VARCHAR(14) UNIQUE,
-    data_nascimento DATE,
-    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE produtos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,
@@ -72,8 +64,6 @@ CREATE TABLE produtos (
     FOREIGN KEY (categoria_id) REFERENCES categorias(id)
     
 );
-
-
 
 CREATE TABLE estoque(
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -88,14 +78,12 @@ CREATE TABLE estoque(
 
 CREATE TABLE vendas(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    cliente_id INT,
+    usuario_id INT,
     data_venda DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) NOT NULL,
     forma_pagamento ENUM('PIX','Cartão Débito','Cartão Crédito','Boleto') NOT NULL,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
-
-
 
 CREATE TABLE itens_venda (
     id INT PRIMARY KEY AUTO_INCREMENT,
