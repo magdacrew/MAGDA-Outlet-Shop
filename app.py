@@ -122,6 +122,40 @@ def cadastro():
     return render_template("auth/cadastro.html")
 
 
+@app.route("/produto/<int:produto_id>")
+def visualizar_produto(produto_id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    # Buscar produto específico pelo ID
+    cursor.execute("""
+        SELECT p.id, p.nome, p.descricao, p.preco, p.preco_original, p.categoria_id, p.imagem, 
+               p.descricao_detalhada 
+        FROM produtos p 
+        WHERE p.id = %s AND p.ativo = TRUE
+    """, (produto_id,))
+    produto = cursor.fetchone()
+    
+    # Buscar produtos relacionados (mesma categoria)
+    if produto:
+        cursor.execute("""
+            SELECT p.id, p.nome, p.preco, p.imagem 
+            FROM produtos p 
+            WHERE p.categoria_id = %s AND p.id != %s AND p.ativo = TRUE 
+            LIMIT 4
+        """, (produto['categoria_id'], produto_id))
+        produtos_relacionados = cursor.fetchall()
+    else:
+        produtos_relacionados = []
+    
+    cursor.close()
+    conexao.close()
+    
+    if produto:
+        return render_template("/pages/visualizacao.html", produto=produto, produtos_relacionados=produtos_relacionados)
+    else:
+        return "Produto não encontrado", 404
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -229,6 +263,162 @@ def produtos():
     conexao.close()
 
     return render_template("/pages/produtos.html", produtos=produtos)
+
+@app.route("/camisetas")
+def categoria_camisetas():
+    try:
+        print("=== INICIANDO ROTA CAMISETAS ===")
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+
+        sql = """
+            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+            FROM produtos p
+            WHERE p.ativo = TRUE AND p.categoria_id = 1
+        """
+        
+        print("Executando SQL...")
+        cursor.execute(sql)
+        produtos = cursor.fetchall()
+        
+        print(f"Produtos encontrados no banco: {len(produtos)}")
+        
+        cursor.close()
+        conexao.close()
+
+        return render_template("/pages/camisetas.html", produtos=produtos)
+    
+    except Exception as e:
+        print(f"ERRO NA ROTA: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template("/pages/camisetas.html", produtos=[])
+
+@app.route("/casacos")
+def categoria_casacos():
+    try:
+        print("=== INICIANDO ROTA CASACOS ===")
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+
+        sql = """
+            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+            FROM produtos p
+            WHERE p.ativo = TRUE AND p.categoria_id = 2
+        """
+        
+        print("Executando SQL...")
+        cursor.execute(sql)
+        produtos = cursor.fetchall()
+        
+        print(f"Produtos encontrados no banco: {len(produtos)}")
+        
+        cursor.close()
+        conexao.close()
+
+        return render_template("/pages/casacos.html", produtos=produtos)
+    
+    except Exception as e:
+        print(f"ERRO NA ROTA: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template("/pages/casacos.html", produtos=[])
+
+@app.route("/calcas")
+def categoria_calcas():
+    try:
+        print("=== INICIANDO ROTA CALÇAS ===")
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+
+        sql = """
+            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+            FROM produtos p
+            WHERE p.ativo = TRUE AND p.categoria_id = 3
+        """
+        
+        print("Executando SQL...")
+        cursor.execute(sql)
+        produtos = cursor.fetchall()
+        
+        print(f"Produtos encontrados no banco: {len(produtos)}")
+        
+        cursor.close()
+        conexao.close()
+
+        return render_template("/pages/calcas.html", produtos=produtos)
+    
+    except Exception as e:
+        print(f"ERRO NA ROTA: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template("/pages/calcas.html", produtos=[])
+
+@app.route("/bermudas")
+def categoria_bermudas():
+    try:
+        print("=== INICIANDO ROTA BERMUDAS ===")
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+
+        sql = """
+            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+            FROM produtos p
+            WHERE p.ativo = TRUE AND p.categoria_id = 4
+        """
+        
+        print("Executando SQL...")
+        cursor.execute(sql)
+        produtos = cursor.fetchall()
+        
+        print(f"Produtos encontrados no banco: {len(produtos)}")
+        
+        cursor.close()
+        conexao.close()
+
+        return render_template("/pages/bermudas.html", produtos=produtos)
+    
+    except Exception as e:
+        print(f"ERRO NA ROTA: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template("/pages/bermudas.html", produtos=[])
+
+@app.route("/acessorios")
+def categoria_acessorios():
+    try:
+        print("=== INICIANDO ROTA ACESSÓRIOS ===")
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+
+        sql = """
+            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+            FROM produtos p
+            WHERE p.ativo = TRUE AND p.categoria_id = 5
+        """
+        
+        print("Executando SQL...")
+        cursor.execute(sql)
+        produtos = cursor.fetchall()
+        
+        print(f"Produtos encontrados no banco: {len(produtos)}")
+        
+        cursor.close()
+        conexao.close()
+
+        return render_template("/pages/acessorios.html", produtos=produtos)
+    
+    except Exception as e:
+        print(f"ERRO NA ROTA: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template("/pages/acessorios.html", produtos=[])
+
 
 @app.route("/carrinho")
 def carrinho():

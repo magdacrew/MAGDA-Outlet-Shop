@@ -7,7 +7,7 @@
     
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
     <section class="beneficios">
         <div class="container">
             <section class="beneficios-section">
-                <h2>Vantagens Exclusivas</h2>
+                <h2 class="destaques-title">Vantagens Exclusivas</h2>
                 <div class="beneficios-container">
                     <div class="beneficio-card">
                         <img src="static/images/envio.png" alt="Frete">
@@ -61,13 +61,15 @@
                         {% for produto in produtos_destaque %}
                         <div class="carrossel-item">
                             <div class="card">
-                                <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
-                                alt="Produto">
+                                <div class="card-image-container">
+                                    <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                                    alt="{{ produto.nome }}" class="carrossel-image">
+                                </div>
                                 <div class="produto-nome">{{ produto.nome }}</div>
                                 <div class="produto-preco">
                                     R$ {{ "%.2f"|format(produto.preco) }}
                                 </div>
-                                <button class="btn-comprar">COMPRAR</button>
+                                <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
                             </div>
                         </div>
                         {% endfor %}
@@ -75,7 +77,9 @@
                         {% if not produtos_destaque %}
                         <div class="carrossel-item">
                             <div class="card">
-                                <img src="{{ url_for('static', filename='images/default.png') }}" alt="Sem produtos">
+                                <div class="card-image-container">
+                                    <img src="{{ url_for('static', filename='images/default.png') }}" alt="Sem produtos" class="carrossel-image">
+                                </div>
                                 <div class="produto-nome">Nenhum produto em destaque</div>
                                 <div class="produto-preco">R$ 0,00</div>
                                 <button class="btn-comprar" disabled>INDISPONÍVEL</button>

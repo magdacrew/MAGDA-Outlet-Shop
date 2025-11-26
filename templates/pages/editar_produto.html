@@ -1,56 +1,91 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="ep-editar-produto">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Produto - MAGDA CREW</title>
+    
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
 </head>
 <body>
+    {% include 'layouts/navbar.html' %}
 
-        <form method="POST" action="/atualizar/{{ produto.id }}" enctype="multipart/form-data">
-        <div class="container">
-            <h1>Editar Produto</h1>
-            <label>Nome:</label>
-            <input type="text" name="nome" value="{{ produto.nome }}" required>
-            <label>Descrição:</label>
-            <input type="text" name="descricao" value="{{ produto.descricao }}" required>
-            <label>Preço:</label>
-            <input type="number" name="preco" value="{{ produto.preco }}" step = "0.01" required>
-            <label>Categoria:</label>
-            <select name="categoria_id" required>
-                <option value="" disabled selected>Selecione...</option>
-                {% for categoria in categorias %}
-                <option value={{categoria.id}}>{{ categoria.nome }}</option>
-            {% endfor %}
-            </select>
-            <label for="destaque">Destaque:</label>
-            <select name="destaque" id="destaque" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                <option value="TRUE" {% if produto.destaque == 1 %}selected{% endif %}>Sim</option>
-                <option value="FALSE" {% if produto.destaque == 0 %}selected{% endif %}>Não</option>
-            </select>
-            <input type="file" name="imagem">
+    <div class="ep-container">
+        <h1>Editar Produto</h1>
+        
+        <form method="POST" action="/atualizar/{{ produto.id }}" enctype="multipart/form-data" class="ep-form">
+            <div class="ep-group">
+                <label>Nome:</label>
+                <input type="text" name="nome" value="{{ produto.nome }}" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Descrição:</label>
+                <input type="text" name="descricao" value="{{ produto.descricao }}" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Preço:</label>
+                <input type="number" name="preco" value="{{ produto.preco }}" step="0.01" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Categoria:</label>
+                <select name="categoria_id" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria.id == produto.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label for="destaque">Destaque:</label>
+                <select name="destaque" id="destaque" required>
+                    <option value="" selected disabled>Selecione uma opção</option>
+                    <option value="TRUE" {% if produto.destaque == 1 %}selected{% endif %}>Sim</option>
+                    <option value="FALSE" {% if produto.destaque == 0 %}selected{% endif %}>Não</option>
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label>Imagem:</label>
+                <input type="file" name="imagem">
+            </div>
 
-            <h1>Editar Estoque</h1>
-            <label>Tamanho:</label>
-            <select name="tamanho_id" required>
-                <option disabled selected>Selecione...</option>
-                {% for tamanho in tamanhos %}
-                    <option value={{tamanho.id}}>{{ tamanho.nome }}</option>
-                {% endfor %}
-            </select>
-            <label>Cor:</label>
-            <select name="cor_id" required>
-                <option value="" selected disabled>Selecione uma opção</option>
-                {% for cor in cores %}
-                <option value={{cor.id}}>{{ cor.nome }}</option>
-            {% endfor %}
-            </select>
-            <label>Quantidade:</label>
-            <input type="number" name="quantidade" value="{{ produto.quantidade }}" required>
+            <h2 class="ep-subtitle">Editar Estoque</h2>
+            
+            <div class="ep-group">
+                <label>Tamanho:</label>
+                <select name="tamanho_id" required>
+                    <option disabled selected>Selecione...</option>
+                    {% for tamanho in tamanhos %}
+                        <option value="{{ tamanho.id }}" {% if tamanho.id == produto.tamanho_id %}selected{% endif %}>{{ tamanho.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label>Cor:</label>
+                <select name="cor_id" required>
+                    <option value="" selected disabled>Selecione uma opção</option>
+                    {% for cor in cores %}
+                    <option value="{{ cor.id }}" {% if cor.id == produto.cor_id %}selected{% endif %}>{{ cor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label>Quantidade:</label>
+                <input type="number" name="quantidade" value="{{ produto.quantidade }}" required>
+            </div>
 
-            <button type="submit">Atualizar</button>
-        </div>
-    </form>
+            <button type="submit" class="ep-btn">Atualizar Produto</button>
+        </form>
+    </div>
 
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

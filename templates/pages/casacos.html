@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produtos - MAGDA CREW</title>
+    <title>Casacos - MAGDA CREW</title>
 
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
@@ -13,49 +13,40 @@
 
     {% include 'layouts/navbar.html' %}
 
-    <h2 class="destaques-title">Produtos</h2>
+    <h2 class="destaques-title">Casacos</h2>
 
     <div class="topo-produtos">
         <a class="botao-cadastrar" href="novo_produto">Cadastrar Produto</a>
-        <a class="botao-cadastrar" href="camisetas">Camisetas</a>
-        <a class="botao-cadastrar" href="calcas">Calças</a>
-        <a class="botao-cadastrar" href="casacos">Casacos</a>
-        <a class="botao-cadastrar" href="bermudas">Bermudas</a>
-        <a class="botao-cadastrar" href="acessorios">Acessórios</a>
     </div>
 
     <div class="produtos-container">
-
         {% for produto in produtos %}
         <div class="card">
-
-            <a href="/editar/{{ produto.id }}" class="">
+            <a href="/editar/{{ produto[0] }}" class="">
                 <img src="/static/images/editar.png" alt="Editar" style="width:20px; height:20px;">
             </a>
-            <a href="/excluir_produto/{{ produto.id }}">
+            <a href="/excluir_produto/{{ produto[0] }}">
                 <img src="/static/images/excluir.png" alt="Excluir" style="width:20px; height:20px;">
             </a>
             
-            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+            <img src="{{ url_for('static', filename='uploads/' ~ produto[3]) if produto[3] else url_for('static', filename='images/default.png') }}"
             alt="Produto">
-
-            <div class="produto-nome">{{ produto.nome }}</div>
-
+    
+            <div class="produto-nome">{{ produto[1] }}</div>
+    
             <div class="produto-preco">
-                R$ {{ "%.2f"|format(produto.preco) }}
+                R$ {{ "%.2f"|format(produto[2]) }}
             </div>
-
-            <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
-
+    
+            <button class="btn-comprar">COMPRAR</button>
         </div>
         {% endfor %}
-
+    
     </div>
 
     <div class="footer-spacer">
         {% include 'layouts/footer.html' %}
     </div>
-
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

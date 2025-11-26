@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ produto.nome }} - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="produto-detalhes-page">
+
+    {% include 'layouts/navbar.html' %}
+
+    <div class="produto-detalhes-container">
+        <div class="produto-imagem-section">
+            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                 alt="{{ produto.nome }}" class="produto-imagem-principal">
+            
+            <div class="produto-miniaturas">
+                <!-- Miniaturas adicionais podem ser adicionadas aqui -->
+                <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                     alt="{{ produto.nome }}" class="miniatura ativa">
+                <!-- Adicione mais miniaturas conforme necessário -->
+            </div>
+        </div>
+
+        <div class="produto-info-section">
+            <h1 class="produto-nome">{{ produto.nome }}</h1>
+            
+            <div class="produto-preco">
+                R$ {{ "%.2f"|format(produto.preco) }}
+                {% if produto.preco_original %}
+                <span class="produto-preco-original">R$ {{ "%.2f"|format(produto.preco_original) }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="produto-descricao">
+                <p>{{ produto.descricao }}</p>
+            </div>
+            
+            <div class="produto-opcoes">
+                <div class="opcao-grupo">
+                    <label for="tamanho">Tamanho:</label>
+                    <select id="tamanho" name="tamanho">
+                        <option value="">Selecione o tamanho</option>
+                        <!-- Opções de tamanho seriam carregadas dinamicamente -->
+                        <option value="P">P</option>
+                        <option value="M">M</option>
+                        <option value="G">G</option>
+                        <option value="GG">GG</option>
+                    </select>
+                </div>
+                
+                <div class="opcao-grupo">
+                    <label for="cor">Cor:</label>
+                    <select id="cor" name="cor">
+                        <option value="">Selecione a cor</option>
+                        <!-- Opções de cor seriam carregadas dinamicamente -->
+                        <option value="preto">Preto</option>
+                        <option value="branco">Branco</option>
+                        <option value="cinza">Cinza</option>
+                    </select>
+                </div>
+                
+                <div class="opcao-grupo">
+                    <label for="quantidade">Quantidade:</label>
+                    <div class="quantidade-selector">
+                        <button type="button" class="quantidade-btn" id="diminuir">-</button>
+                        <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
+                        <button type="button" class="quantidade-btn" id="aumentar">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="produto-acoes">
+                <button class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
+                <button class="btn-comprar-agora">COMPRAR AGORA</button>
+            </div>
+            
+            <div class="produto-detalhes-adicionais">
+                <div class="detalhe-item">
+                    <h3>Descrição Detalhada</h3>
+                    <p>{{ produto.descricao_detalhada or 'Detalhes adicionais sobre o produto.' }}</p>
+                </div>
+                
+                <div class="detalhe-item">
+                    <h3>Informações de Envio</h3>
+                    <p>Frete grátis para Joinville em compras acima de R$ 599,90. Entrega em até 5 dias úteis.</p>
+                </div>
+                
+                <div class="detalhe-item">
+                    <h3>Formas de Pagamento</h3>
+                    <p>Cartão de crédito (até 3x sem juros), PIX (5% de desconto) e boleto bancário.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de produtos relacionados -->
+    <section class="produtos-relacionados-section">
+        <div class="container">
+            <h2 class="destaques-title">Produtos Relacionados</h2>
+            
+            <div class="produtos-container">
+                {% for produto_relacionado in produtos_relacionados %}
+                <div class="card">
+                    <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
+                         alt="{{ produto_relacionado.nome }}">
+                    <div class="produto-nome">{{ produto_relacionado.nome }}</div>
+                    <div class="produto-preco">
+                        R$ {{ "%.2f"|format(produto_relacionado.preco) }}
+                    </div>
+                    <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <div class="footer-spacer">
+        {% include 'layouts/footer.html' %}
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
