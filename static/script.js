@@ -24,34 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isIndex) {
         initializeCarrossel();
     }
-  
-    // Ajustar altura das imagens
-    ajustarAlturaImagens();
   });
-  
-  // Função para ajustar altura das imagens do carrossel
-  function ajustarAlturaImagens() {
-      const carrosselImagens = document.querySelectorAll('.carrossel-image');
-      const produtoImagens = document.querySelectorAll('.produtos-container .card img');
-      
-      // Definir altura consistente baseada no tamanho da tela
-      let altura;
-      if (window.innerWidth < 480) {
-          altura = 180;
-      } else if (window.innerWidth < 768) {
-          altura = 200;
-      } else {
-          altura = 250;
-      }
-      
-      carrosselImagens.forEach(img => {
-          img.style.height = `${altura}px`;
-      });
-      
-      produtoImagens.forEach(img => {
-          img.style.height = `${altura}px`;
-      });
-  }
   
   function togglePassword() {
     const input = document.getElementById("senha");
@@ -217,7 +190,6 @@ document.addEventListener("DOMContentLoaded", function () {
         resizeTimeout = setTimeout(() => {
             updateCarrossel();
             createIndicators();
-            ajustarAlturaImagens(); // Reajustar altura das imagens
         }, 250);
     });
   
@@ -254,7 +226,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 2000);
     }
   });
-  // Funcionalidades da página de detalhes do produto
+
+// Funcionalidades da página de detalhes do produto
 document.addEventListener('DOMContentLoaded', function() {
     // Controle de quantidade
     const diminuirBtn = document.getElementById('diminuir');

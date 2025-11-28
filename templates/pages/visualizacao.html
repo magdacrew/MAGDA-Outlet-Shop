@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ produto.nome }} - MAGDA CREW</title>
 
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 
 <body class="produto-detalhes-page">
@@ -32,7 +32,6 @@
             <div class="produto-preco">
                 R$ {{ "%.2f"|format(produto.preco) }}
                 {% if produto.preco_original %}
-                <span class="produto-preco-original">R$ {{ "%.2f"|format(produto.preco_original) }}</span>
                 {% endif %}
             </div>
             
@@ -40,27 +39,24 @@
                 <p>{{ produto.descricao }}</p>
             </div>
             
-            <div class="produto-opcoes">
+            <form class="produto-opcoes" id="form-produto">
                 <div class="opcao-grupo">
                     <label for="tamanho">Tamanho:</label>
-                    <select id="tamanho" name="tamanho">
-                        <option value="">Selecione o tamanho</option>
-                        <!-- Opções de tamanho seriam carregadas dinamicamente -->
-                        <option value="P">P</option>
-                        <option value="M">M</option>
-                        <option value="G">G</option>
-                        <option value="GG">GG</option>
+                    <select name="tamanho_id" id="tamanho" required>
+                        <option disabled selected value="">Selecione...</option>
+                        {% for tamanho in tamanhos %}
+                        <option value="{{ tamanho.id }}">{{ tamanho.nome }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="opcao-grupo">
                     <label for="cor">Cor:</label>
-                    <select id="cor" name="cor">
-                        <option value="">Selecione a cor</option>
-                        <!-- Opções de cor seriam carregadas dinamicamente -->
-                        <option value="preto">Preto</option>
-                        <option value="branco">Branco</option>
-                        <option value="cinza">Cinza</option>
+                    <select name="cor_id" id="cor" required>
+                        <option disabled selected value="">Selecione...</option>
+                        {% for cor in cores %}
+                        <option value="{{ cor.id }}">{{ cor.nome }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 
@@ -72,12 +68,12 @@
                         <button type="button" class="quantidade-btn" id="aumentar">+</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="produto-acoes">
-                <button class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
-                <button class="btn-comprar-agora">COMPRAR AGORA</button>
-            </div>
+                
+                <div class="produto-acoes">
+                    <button type="button" class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
+                    <button type="button" class="btn-comprar-agora">COMPRAR AGORA</button>
+                </div>
+            </form>
             
             <div class="produto-detalhes-adicionais">
                 <div class="detalhe-item">
@@ -106,8 +102,10 @@
             <div class="produtos-container">
                 {% for produto_relacionado in produtos_relacionados %}
                 <div class="card">
-                    <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
+                    <a href="/visualizacao/{{produto.id}}">
+                        <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
                          alt="{{ produto_relacionado.nome }}">
+                    </a>
                     <div class="produto-nome">{{ produto_relacionado.nome }}</div>
                     <div class="produto-preco">
                         R$ {{ "%.2f"|format(produto_relacionado.preco) }}
@@ -119,7 +117,8 @@
         </div>
     </section>
 
-    <div class="footer-spacer">
+    <!-- CORREÇÃO: Div fechada corretamente -->
+    <div>
         {% include 'layouts/footer.html' %}
     </div>
 

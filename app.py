@@ -4,7 +4,8 @@ import mysql.connector
 import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.secret_key = 'MAGDA_GAE'
@@ -33,6 +34,116 @@ def home():
 
     return render_template("/pages/index.html", produtos_destaque=produtos_destaque)
 
+@app.route("/dashboard")
+def dashboard():
+    try:
+        conn = conectar()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Métricas principais
+        cursor.execute("SELECT COALESCE(SUM(valor_total), 0) as total_vendas_hoje FROM vendas WHERE DATE(data_venda) = CURDATE()")
+        vendas_hoje = cursor.fetchone()
+        
+        cursor.execute("SELECT COUNT(*) as total_produtos FROM produtos WHERE ativo = TRUE")
+        total_produtos = cursor.fetchone()
+        
+        cursor.execute("SELECT COUNT(*) as novos_usuarios FROM usuarios WHERE data_cadastro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)")
+        novos_usuarios = cursor.fetchone()
+        
+        cursor.execute("""
+            SELECT COUNT(*) as estoque_baixo 
+            FROM (SELECT produto_id, SUM(quantidade) as total_estoque FROM estoque GROUP BY produto_id HAVING total_estoque < 10) as baixo
+        """)
+        estoque_baixo = cursor.fetchone()
+        
+        # Vendas últimos 7 dias
+        cursor.execute("""
+            SELECT DATE(data_venda) as data, COALESCE(SUM(valor_total), 0) as total 
+            FROM vendas WHERE data_venda >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(data_venda) ORDER BY data
+        """)
+        vendas_db = cursor.fetchall()
+        
+        # Preencher datas faltantes
+        datas_completas = []
+        for i in range(7):
+            data_alvo = (datetime.now() - timedelta(days=6-i)).date()
+            total = 0
+            for venda in vendas_db:
+                venda_data = venda['data'].date() if hasattr(venda['data'], 'date') else venda['data']
+                if venda_data == data_alvo:
+                    total = float(venda['total'])
+                    break
+            datas_completas.append({'data': data_alvo, 'total': total})
+        
+        # Produtos mais vendidos
+        cursor.execute("""
+            SELECT p.nome, SUM(iv.quantidade) as total_vendido, 
+                   SUM(iv.quantidade * iv.preco_unitario) as receita
+            FROM itens_venda iv JOIN produtos p ON iv.produto_id = p.id
+            GROUP BY p.id, p.nome ORDER BY total_vendido DESC LIMIT 5
+        """)
+        produtos_mais_vendidos = cursor.fetchall()
+        
+        # Vendas por categoria
+        cursor.execute("""
+            SELECT c.nome as categoria, COALESCE(SUM(iv.quantidade * iv.preco_unitario), 0) as total
+            FROM categorias c
+            LEFT JOIN produtos p ON c.id = p.categoria_id
+            LEFT JOIN itens_venda iv ON p.id = iv.produto_id
+            GROUP BY c.id, c.nome
+            ORDER BY total DESC
+        """)
+        vendas_por_categoria = cursor.fetchall()
+        
+        # Atividades recentes
+        cursor.execute("""
+            SELECT v.data_venda as data, v.forma_pagamento, v.valor_total as valor,
+                   COUNT(iv.id) as itens
+            FROM vendas v
+            LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+            GROUP BY v.id
+            ORDER BY v.data_venda DESC
+            LIMIT 5
+        """)
+        atividades_recentes = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Renderizar o template com valores padrão para evitar erros
+        return render_template(
+            "dashboard.html",
+            vendas_hoje=float(vendas_hoje.get('total_vendas_hoje', 0)),
+            total_produtos=total_produtos.get('total_produtos', 0),
+            novos_usuarios=novos_usuarios.get('novos_usuarios', 0),
+            estoque_baixo=estoque_baixo.get('estoque_baixo', 0),
+            vendas_7_dias=datas_completas,
+            produtos_mais_vendidos=produtos_mais_vendidos,
+            vendas_por_categoria=vendas_por_categoria,
+            atividades_recentes=atividades_recentes,
+            crescimento=15.5,  # Exemplo fixo
+            now=datetime.now()
+        )
+
+    except Exception as e:
+        print(f"Erro ao carregar a dashboard: {e}")
+        # Retornar dados de exemplo em caso de erro
+        hoje = datetime.now().date()
+        return render_template(
+            "dashboard.html",
+            vendas_hoje=0,
+            total_produtos=0,
+            novos_usuarios=0,
+            estoque_baixo=0,
+            vendas_7_dias=[],
+            produtos_mais_vendidos=[],
+            vendas_por_categoria=[],
+            atividades_recentes=[],
+            crescimento=0,
+            now=datetime.now()
+        )
+    
 @app.route("/cadastro", methods=['GET', 'POST'])
 def cadastro():
     if request.method == 'POST':
@@ -120,41 +231,6 @@ def cadastro():
             flash(f'Erro inesperado: {str(e)}', 'error')
             return render_template("auth/cadastro.html")
     return render_template("auth/cadastro.html")
-
-
-@app.route("/produto/<int:produto_id>")
-def visualizar_produto(produto_id):
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    
-    # Buscar produto específico pelo ID
-    cursor.execute("""
-        SELECT p.id, p.nome, p.descricao, p.preco, p.preco_original, p.categoria_id, p.imagem, 
-               p.descricao_detalhada 
-        FROM produtos p 
-        WHERE p.id = %s AND p.ativo = TRUE
-    """, (produto_id,))
-    produto = cursor.fetchone()
-    
-    # Buscar produtos relacionados (mesma categoria)
-    if produto:
-        cursor.execute("""
-            SELECT p.id, p.nome, p.preco, p.imagem 
-            FROM produtos p 
-            WHERE p.categoria_id = %s AND p.id != %s AND p.ativo = TRUE 
-            LIMIT 4
-        """, (produto['categoria_id'], produto_id))
-        produtos_relacionados = cursor.fetchall()
-    else:
-        produtos_relacionados = []
-    
-    cursor.close()
-    conexao.close()
-    
-    if produto:
-        return render_template("/pages/visualizacao.html", produto=produto, produtos_relacionados=produtos_relacionados)
-    else:
-        return "Produto não encontrado", 404
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -455,10 +531,12 @@ def salvar_produto():
     descricao = request.form.get('descricao', '')
     preco = request.form.get('preco', '')
     categoria_id = request.form.get('categoria_id', '')
-    tamanho_id = request.form.get('tamanho_id', '')
-    cor_id = request.form.get('cor_id', '')
-    quantidade = request.form.get('quantidade', '')
     destaque = request.form.get('destaque', 'FALSE')
+    
+    # Receber múltiplos valores como listas
+    tamanhos_ids = request.form.getlist('tamanho_id[]')
+    cores_ids = request.form.getlist('cor_id[]')
+    quantidades = request.form.getlist('quantidade[]')
     
     imagem_file = request.files.get("imagem")
     imagem_nome = None
@@ -471,14 +549,19 @@ def salvar_produto():
         return "Erro: O nome não pode ser vazio.", 400
     if descricao.strip() == "":
         return "Erro: A descrição não pode ser vazia.", 400
+    if not tamanhos_ids or not cores_ids or not quantidades:
+        return "Erro: É necessário informar pelo menos um tamanho, cor e quantidade.", 400
 
     try:
         preco = float(preco)
-        quantidade = int(quantidade)
         categoria_id = int(categoria_id)
-        tamanho_id = int(tamanho_id)
-        cor_id = int(cor_id)
         destaque = True if destaque == 'TRUE' else False
+        
+        # Converter listas para inteiros
+        tamanhos_ids = [int(t) for t in tamanhos_ids]
+        cores_ids = [int(c) for c in cores_ids]
+        quantidades = [int(q) for q in quantidades]
+        
     except ValueError:
         return "Erro: Tipos inválidos (preço/quantidade/ids).", 400
 
@@ -486,6 +569,7 @@ def salvar_produto():
     cursor = conexao.cursor(dictionary=True)
 
     try:
+        # Inserir o produto principal
         sql_produto_ins = """
             INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -494,11 +578,16 @@ def salvar_produto():
         conexao.commit()
         produto_id = cursor.lastrowid
 
+        # Inserir múltiplos registros no estoque
         sql_estoque_ins = """
             INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
             VALUES (%s, %s, %s, %s)
         """
-        cursor.execute(sql_estoque_ins, (produto_id, tamanho_id, cor_id, quantidade))
+        
+        # Para cada combinação de tamanho, cor e quantidade
+        for i in range(len(tamanhos_ids)):
+            cursor.execute(sql_estoque_ins, (produto_id, tamanhos_ids[i], cores_ids[i], quantidades[i]))
+        
         conexao.commit()
 
     except Exception as e:
@@ -512,45 +601,53 @@ def salvar_produto():
 
 @app.route("/editar/<int:id>")
 def editar_produto(id):
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    cursor.execute("SELECT c.id, c.nome FROM cores c")
-    cores = cursor.fetchall()
-    cursor.close()
-    conexao.close()
-
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    cursor.execute("SELECT t.id, t.nome FROM tamanhos t")
-    tamanhos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
-
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    cursor.execute("SELECT c.id, c.nome FROM categorias c")
-    categorias = cursor.fetchall()
-    cursor.close()
-    conexao.close()
     try:
         conexao = conectar()
         cursor = conexao.cursor(dictionary=True)
         
+        # Buscar cores, tamanhos e categorias
+        cursor.execute("SELECT c.id, c.nome FROM cores c")
+        cores = cursor.fetchall()
+        
+        cursor.execute("SELECT t.id, t.nome FROM tamanhos t")
+        tamanhos = cursor.fetchall()
+        
+        cursor.execute("SELECT c.id, c.nome FROM categorias c")
+        categorias = cursor.fetchall()
+        
+        # Buscar produto e TODAS as variações do estoque
         cursor.execute("""
-            SELECT p.*, e.id as estoque_id, e.tamanho_id, e.cor_id, e.quantidade 
+            SELECT p.* 
             FROM produtos p 
-            LEFT JOIN estoque e ON p.id = e.produto_id 
             WHERE p.id = %s
         """, (id,))
         produto = cursor.fetchone()
         
+        if not produto:
+            cursor.close()
+            conexao.close()
+            return "Produto não encontrado", 404
+        
+        # Buscar todas as variações do estoque
+        cursor.execute("""
+            SELECT e.id as estoque_id, e.tamanho_id, e.cor_id, e.quantidade,
+                   t.nome as tamanho_nome, c.nome as cor_nome
+            FROM estoque e 
+            LEFT JOIN tamanhos t ON e.tamanho_id = t.id
+            LEFT JOIN cores c ON e.cor_id = c.id
+            WHERE e.produto_id = %s
+        """, (id,))
+        estoque_variacoes = cursor.fetchall()
+        
         cursor.close()
         conexao.close()
-        
-        if not produto:
-            return "Produto não encontrado", 404
             
-        return render_template("/pages/editar_produto.html", produto=produto, cores=cores, tamanhos=tamanhos, categorias=categorias)
+        return render_template("/pages/editar_produto.html", 
+                             produto=produto, 
+                             cores=cores, 
+                             tamanhos=tamanhos, 
+                             categorias=categorias,
+                             estoque_variacoes=estoque_variacoes)
         
     except Exception as e:
         return f"Erro ao buscar produto: {str(e)}", 500
@@ -564,18 +661,30 @@ def atualizar_produto(id):
         categoria_id = request.form["categoria_id"]
         destaque = request.form.get('destaque', 'FALSE')
         
+        # Receber múltiplos valores como listas
+        tamanhos_ids = request.form.getlist('tamanho_id[]')
+        cores_ids = request.form.getlist('cor_id[]')
+        quantidades = request.form.getlist('quantidade[]')
+        estoque_ids = request.form.getlist('estoque_id[]')
+        
         if not nome:
             return "Erro: O nome não pode ser vazio.", 400
         if not descricao:
             return "Erro: A descrição não pode ser vazia.", 400
+        if not tamanhos_ids or not cores_ids or not quantidades:
+            return "Erro: É necessário informar pelo menos um tamanho, cor e quantidade.", 400
 
         try:
             preco = float(preco)
             categoria_id = int(categoria_id)
-            tamanho_id = int(request.form.get('tamanho_id', 0)) or None
-            cor_id = int(request.form.get('cor_id', 0)) or None
-            quantidade = int(request.form.get('quantidade', 0))
             destaque = True if destaque == 'TRUE' else False
+            
+            # Converter listas para inteiros
+            tamanhos_ids = [int(t) for t in tamanhos_ids]
+            cores_ids = [int(c) for c in cores_ids]
+            quantidades = [int(q) for q in quantidades]
+            estoque_ids = [int(e) if e else None for e in estoque_ids]
+            
         except ValueError:
             return "Erro: Valores numéricos inválidos.", 400
 
@@ -589,65 +698,144 @@ def atualizar_produto(id):
         conexao = conectar()
         cursor = conexao.cursor()
 
-        if imagem_nome:
-            sql_produto = """
-                UPDATE produtos 
-                SET nome = %s, descricao = %s, preco = %s, categoria_id = %s, 
-                    imagem = %s, destaque = %s 
-                WHERE id = %s
-            """
-            cursor.execute(sql_produto, (nome, descricao, preco, categoria_id, imagem_nome, destaque, id))
-        else:
-            sql_produto = """
-                UPDATE produtos 
-                SET nome = %s, descricao = %s, preco = %s, categoria_id = %s, 
-                    destaque = %s 
-                WHERE id = %s
-            """
-            cursor.execute(sql_produto, (nome, descricao, preco, categoria_id, destaque, id))
+        try:
+            # Atualizar produto
+            if imagem_nome:
+                sql_produto = """
+                    UPDATE produtos 
+                    SET nome = %s, descricao = %s, preco = %s, categoria_id = %s, 
+                        imagem = %s, destaque = %s 
+                    WHERE id = %s
+                """
+                cursor.execute(sql_produto, (nome, descricao, preco, categoria_id, imagem_nome, destaque, id))
+            else:
+                sql_produto = """
+                    UPDATE produtos 
+                    SET nome = %s, descricao = %s, preco = %s, categoria_id = %s, 
+                        destaque = %s 
+                    WHERE id = %s
+                """
+                cursor.execute(sql_produto, (nome, descricao, preco, categoria_id, destaque, id))
 
-        sql_estoque = "UPDATE estoque SET tamanho_id = %s, cor_id = %s, quantidade = %s WHERE produto_id = %s"
-        cursor.execute(sql_estoque, (tamanho_id, cor_id, quantidade, id))
-
-        if cursor.rowcount == 0:
-            cursor.execute("""
-            INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
-            VALUES (%s, %s, %s, %s)
-            """, (id, tamanho_id, cor_id, quantidade))
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-        
-        return redirect("/produtos")
-        
+            # Primeiro, remover todas as variações existentes
+            cursor.execute("DELETE FROM estoque WHERE produto_id = %s", (id,))
+            
+            # Inserir as novas variações
+            sql_estoque = """
+                INSERT INTO estoque (id, produto_id, tamanho_id, cor_id, quantidade)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            
+            for i in range(len(tamanhos_ids)):
+                # Se estoque_id existe (atualização), senão None (novo)
+                estoque_id = estoque_ids[i] if i < len(estoque_ids) else None
+                cursor.execute(sql_estoque, (estoque_id, id, tamanhos_ids[i], cores_ids[i], quantidades[i]))
+            
+            conexao.commit()
+            cursor.close()
+            conexao.close()
+            
+            return redirect("/produtos")
+            
+        except Exception as e:
+            conexao.rollback()
+            raise e
+            
     except Exception as e:
         if 'conexao' in locals():
             conexao.rollback()
             conexao.close()
         return f"Erro ao atualizar produto: {str(e)}", 500
 
-
-@app.route("/excluir_produto/<int:id>")
-def excluir_produto(id):
+@app.route("/desativar_produto/<int:id>")
+def desativar_produto(id):
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
     
     try:
-        sql_estoque = "DELETE FROM estoque WHERE produto_id = %s"
-        cursor.execute(sql_estoque, (id,))
-        
-        sql_produto = "DELETE FROM produtos WHERE id = %s"
+        sql_produto = "UPDATE produtos SET ativo = FALSE WHERE id = %s"
         cursor.execute(sql_produto, (id,))
         
         conexao.commit()
     except Exception as e:
         conexao.rollback()
-        return f"Erro ao excluir produto: {str(e)}", 500
+        return f"Erro ao desativar produto: {str(e)}", 500
+    finally:
+        cursor.close()
+        conexao.close()  
+    return redirect("/produtos")
+
+@app.route("/reativar_produto/<int:id>")
+def reativar_produto(id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    try:
+        sql_produto = "UPDATE produtos SET ativo = TRUE WHERE id = %s"
+        cursor.execute(sql_produto, (id,))
+        conexao.commit()
+    except Exception as e:
+        conexao.rollback()
+        return f"Erro ao reativar produto: {str(e)}", 500
     finally:
         cursor.close()
         conexao.close()
     
     return redirect("/produtos")
+
+@app.route("/visualizacao/<int:produto_id>")
+def visualizar_produto(produto_id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT p.id, p.nome, p.descricao, p.preco, p.categoria_id, p.imagem 
+        FROM produtos p 
+        WHERE p.id = %s AND p.ativo = TRUE
+    """, (produto_id,))
+    produto = cursor.fetchone()
+    
+    if produto:
+        cursor.execute("""
+            SELECT p.id, p.nome, p.preco, p.imagem 
+            FROM produtos p 
+            WHERE p.categoria_id = %s AND p.id != %s AND p.ativo = TRUE 
+            LIMIT 4
+        """, (produto['categoria_id'], produto_id))
+        produtos_relacionados = cursor.fetchall()
+    else:
+        produtos_relacionados = []
+    
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("""SELECT DISTINCT c.id, c.nome 
+                FROM cores c
+                JOIN estoque e ON e.cor_id = c.id
+                JOIN produtos p ON p.id = e.produto_id
+                WHERE p.id = %s AND p.ativo = TRUE
+                ORDER BY c.nome  """, (produto_id,))
+    cores = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("""SELECT DISTINCT t.id, t.nome 
+                FROM tamanhos t
+                JOIN estoque e ON e.tamanho_id = t.id
+                JOIN produtos p ON p.id = e.produto_id
+                WHERE p.id = %s AND p.ativo = TRUE ORDER BY t.id""", (produto_id,))
+    tamanhos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    
+    if produto:
+        return render_template("/pages/visualizacao.html", produto=produto, produtos_relacionados=produtos_relacionados, cores=cores, tamanhos=tamanhos)
+    else:
+        return "Produto não encontrado", 404
     
 @app.route("/produto/<int:id>/destaque", methods=['POST'])
 def toggle_destaque(id):
@@ -667,6 +855,14 @@ def toggle_destaque(id):
         conexao.close()
     
     return redirect("/produtos")
+
+def conectar():
+    return mysql.connector.connect(
+        host='localhost', 
+        user='root', 
+        port='3406', 
+        database='crew_magda'
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

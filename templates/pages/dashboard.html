@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MAGDA CREW</title>
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <!-- Incluir Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="dashboard-page">
+
+    <div class="dashboard-container">
+        <!-- HEADER DO DASHBOARD -->
+        <header class="dashboard-header">
+            <h1>Dashboard</h1>
+            <p class="dashboard-subtitle">Visão geral da sua loja</p>
+        </header>
+
+        <!-- CARDS DE MÉTRICAS -->
+        <div class="metrics-grid">
+            <!-- Vendas -->
+            <div class="metric-card">
+                <div class="metric-icon">💰</div>
+                <div class="metric-content">
+                    <h3>Vendas Hoje</h3>
+                    <div class="metric-value">R$ 2.847,90</div>
+                    <div class="metric-change positive">+12% vs ontem</div>
+                </div>
+            </div>
+
+            <!-- Produtos -->
+            <div class="metric-card">
+                <div class="metric-icon">📦</div>
+                <div class="metric-content">
+                    <h3>Total de Produtos</h3>
+                    <div class="metric-value">156</div>
+                    <div class="metric-change positive">+5 este mês</div>
+                </div>
+            </div>
+
+            <!-- Clientes -->
+            <div class="metric-card">
+                <div class="metric-icon">👥</div>
+                <div class="metric-content">
+                    <h3>Novos Clientes</h3>
+                    <div class="metric-value">28</div>
+                    <div class="metric-change positive">+8%</div>
+                </div>
+            </div>
+
+            <!-- Estoque -->
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <h3>Estoque Baixo</h3>
+                    <div class="metric-value">7</div>
+                    <div class="metric-change negative">-2 produtos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS E TABELAS -->
+        <div class="charts-grid">
+            <!-- Gráfico de Vendas -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Vendas dos Últimos 7 Dias</h3>
+                    <select class="chart-filter">
+                        <option>7 dias</option>
+                        <option>30 dias</option>
+                        <option>90 dias</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Produtos Mais Vendidos -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Produtos Mais Vendidos</h3>
+                </div>
+                <div class="top-products">
+                    <div class="product-item">
+                        <div class="product-rank">1</div>
+                        <div class="product-info">
+                            <div class="product-name">Camiseta Básica Preta</div>
+                            <div class="product-sales">42 vendas</div>
+                        </div>
+                        <div class="product-revenue">R$ 1.258,80</div>
+                    </div>
+                    <div class="product-item">
+                        <div class="product-rank">2</div>
+                        <div class="product-info">
+                            <div class="product-name">Calça Jeans Skinny</div>
+                            <div class="product-sales">28 vendas</div>
+                        </div>
+                        <div class="product-revenue">R$ 2.799,20</div>
+                    </div>
+                    <div class="product-item">
+                        <div class="product-rank">3</div>
+                        <div class="product-info">
+                            <div class="product-name">Casaco Moletom</div>
+                            <div class="product-sales">25 vendas</div>
+                        </div>
+                        <div class="product-revenue">R$ 2.497,50</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Atividades Recentes -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Atividades Recentes</h3>
+                </div>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon">🛒</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Nova venda realizada</div>
+                            <div class="activity-time">Há 5 minutos</div>
+                        </div>
+                        <div class="activity-value">R$ 189,90</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">📦</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Produto cadastrado</div>
+                            <div class="activity-time">Há 1 hora</div>
+                        </div>
+                        <div class="activity-value">Bermuda Jeans</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">👤</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Novo cliente cadastrado</div>
+                            <div class="activity-time">Há 2 horas</div>
+                        </div>
+                        <div class="activity-value">Maria Silva</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas de Categoria -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Vendas por Categoria</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTÕES DE AÇÃO RÁPIDA -->
+        <div class="quick-actions">
+            <h3>Ações Rápidas</h3>
+            <div class="actions-grid">
+                <a href="/novo_produto" class="action-btn">
+                    <div class="action-icon">➕</div>
+                    <div class="action-text">Cadastrar Produto</div>
+                </a>
+                <a href="/estoque.html" class="action-btn">
+                    <div class="action-icon">📊</div>
+                    <div class="action-text">Ver Estoque</div>
+                </a>
+                <a href="/vendas" class="action-btn">
+                    <div class="action-icon">💰</div>
+                    <div class="action-text">Relatório de Vendas</div>
+                </a>
+                <a href="/clientes" class="action-btn">
+                    <div class="action-icon">👥</div>
+                    <div class="action-text">Gerenciar Clientes</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-spacer">
+        {% include 'layouts/footer.html' %}
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Gráfico de Vendas
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                datasets: [{
+                    label: 'Vendas (R$)',
+                    data: [1200, 1900, 1500, 2200, 1800, 2500, 2847],
+                    borderColor: '#000',
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Categorias
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Camisetas', 'Calças', 'Casacos', 'Bermudas', 'Acessórios'],
+                datasets: [{
+                    data: [35, 25, 20, 15, 5],
+                    backgroundColor: [
+                        '#000',
+                        '#333',
+                        '#666',
+                        '#999',
+                        '#ccc'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Efeitos de hover nos cards
+        document.querySelectorAll('.metric-card, .chart-card, .action-btn').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -7,7 +7,6 @@
     
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -61,10 +60,8 @@
                         {% for produto in produtos_destaque %}
                         <div class="carrossel-item">
                             <div class="card">
-                                <div class="card-image-container">
-                                    <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
-                                    alt="{{ produto.nome }}" class="carrossel-image">
-                                </div>
+                                <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                                alt="Produto">
                                 <div class="produto-nome">{{ produto.nome }}</div>
                                 <div class="produto-preco">
                                     R$ {{ "%.2f"|format(produto.preco) }}
@@ -77,9 +74,7 @@
                         {% if not produtos_destaque %}
                         <div class="carrossel-item">
                             <div class="card">
-                                <div class="card-image-container">
-                                    <img src="{{ url_for('static', filename='images/default.png') }}" alt="Sem produtos" class="carrossel-image">
-                                </div>
+                                <img src="{{ url_for('static', filename='images/default.png') }}" alt="Sem produtos">
                                 <div class="produto-nome">Nenhum produto em destaque</div>
                                 <div class="produto-preco">R$ 0,00</div>
                                 <button class="btn-comprar" disabled>INDISPONÍVEL</button>

@@ -138,5 +138,3 @@ Exemplo de Cadastro de clientes:
 INSERT INTO clientes(nome,email,telefone,cpf,data_nascimento)
 VALUES 
 ('Adrian Holz','holzadrian8@gmail.com','(47) 99784-5924','148.060.359-71','2008-06-06')
-
-
