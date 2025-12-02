@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Identificação - MAGDA CREW</title>
 
-    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
 </head>
 <body>
@@ -18,6 +18,13 @@
         <div class="conta-container">
 
             <div class="card conta-card user-card">
+                <!-- Botão Editar Dados adicionado aqui -->
+                <div style="text-align: right; margin-bottom: 20px;">
+                    <a href="/editar_usuario/{{ usuario.id }}" class="btn-editar">
+                        <img src="/static/images/editar.png" alt="Editar Usuário" style="width:20px; height:20px;">
+                    </a>
+                </div>
+
                 <h2>Meus dados</h2>
                 <p class="conta-descricao">Mantenha seus dados atualizados</p>
 
@@ -48,5 +55,4 @@
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-<head>
 </html>

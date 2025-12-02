@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         aumentarBtn.addEventListener('click', function() {
             let currentValue = parseInt(quantidadeInput.value);
-            if (currentValue < 10) { // Limite máximo de 10
+            if (currentValue < quantidadeInput.max) {
                 quantidadeInput.value = currentValue + 1;
             }
         });
@@ -281,4 +281,94 @@ document.addEventListener('DOMContentLoaded', function() {
             alert(`Produto adicionado ao carrinho!\nTamanho: ${tamanho}\nCor: ${cor}\nQuantidade: ${quantidade}`);
         });
     }
+});
+
+// Função para inicializar os accordions
+function initializeAccordions() {
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+    
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const accordionItem = this.parentElement;
+            const accordionContent = this.nextElementSibling;
+            const icon = this.querySelector('.accordion-icon');
+            
+            // Fecha todos os outros accordions se já estiver aberto
+            const isCurrentlyActive = accordionItem.classList.contains('active');
+            
+            // Fecha todos os outros
+            document.querySelectorAll('.accordion-item').forEach(item => {
+                if (item !== accordionItem) {
+                    item.classList.remove('active');
+                    const content = item.querySelector('.accordion-content');
+                    content.style.maxHeight = null;
+                }
+            });
+            
+            // Alterna o accordion clicado
+            if (isCurrentlyActive) {
+                accordionItem.classList.remove('active');
+                accordionContent.style.maxHeight = null;
+            } else {
+                accordionItem.classList.add('active');
+                accordionContent.style.maxHeight = accordionContent.scrollHeight + "px";
+            }
+        });
+    });
+    
+    // Inicialmente todos fechados (ou o primeiro aberto - escolha uma opção):
+    
+    // Opção 1: Todos fechados inicialmente
+    // Não faça nada aqui
+    
+    // Opção 2: Primeiro aberto (descomente se quiser)
+    /*
+    const firstAccordion = document.querySelector('.accordion-item');
+    if (firstAccordion) {
+        firstAccordion.classList.add('active');
+        const firstContent = firstAccordion.querySelector('.accordion-content');
+        firstContent.style.maxHeight = firstContent.scrollHeight + "px";
+    }
+    */
+}
+
+// Inicializa os accordions quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAccordions();
+    
+    // Se houver filtros ativos na URL, abra os accordions relevantes
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Verifica cada tipo de filtro
+    const hasCategory = urlParams.has('categoria');
+    const hasSize = urlParams.has('tamanho');
+    const hasColor = urlParams.has('cor');
+    const hasPrice = urlParams.has('preco');
+    
+    // Abre apenas os accordions com filtros ativos
+    setTimeout(() => {
+        const accordionItems = document.querySelectorAll('.accordion-item');
+        
+        accordionItems.forEach(item => {
+            const header = item.querySelector('.accordion-header');
+            const content = item.querySelector('.accordion-content');
+            
+            if (header.textContent.includes('CATEGORIA') && hasCategory) {
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+            if (header.textContent.includes('TAMANHO') && hasSize) {
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+            if (header.textContent.includes('COR') && hasColor) {
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+            if (header.textContent.includes('PREÇO') && hasPrice) {
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+        });
+    }, 100);
 });

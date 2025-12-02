@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 
 import mysql.connector
 import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+import json
 
 
 app = Flask(__name__)
@@ -24,7 +25,7 @@ def home():
     sql = """
         SELECT p.id, p.nome, p.preco, p.imagem
         FROM produtos p
-        WHERE p.destaque = TRUE
+        WHERE p.destaque = TRUE AND p.ativo = TRUE
     """
     cursor.execute(sql)
     produtos_destaque = cursor.fetchall()
@@ -35,53 +36,69 @@ def home():
     return render_template("/pages/index.html", produtos_destaque=produtos_destaque)
 
 @app.route("/dashboard")
-def dashboard():
+def dashboardmagda():
     try:
         conn = conectar()
         cursor = conn.cursor(dictionary=True)
         
         # Métricas principais
         cursor.execute("SELECT COALESCE(SUM(valor_total), 0) as total_vendas_hoje FROM vendas WHERE DATE(data_venda) = CURDATE()")
-        vendas_hoje = cursor.fetchone()
+        vendas_hoje = cursor.fetchone()['total_vendas_hoje']
         
         cursor.execute("SELECT COUNT(*) as total_produtos FROM produtos WHERE ativo = TRUE")
-        total_produtos = cursor.fetchone()
+        total_produtos = cursor.fetchone()['total_produtos']
         
-        cursor.execute("SELECT COUNT(*) as novos_usuarios FROM usuarios WHERE data_cadastro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)")
-        novos_usuarios = cursor.fetchone()
+        cursor.execute("SELECT COUNT(*) as novos_usuarios FROM usuarios WHERE DATE(data_cadastro) = CURDATE()")
+        novos_usuarios = cursor.fetchone()['novos_usuarios']
         
         cursor.execute("""
-            SELECT COUNT(*) as estoque_baixo 
-            FROM (SELECT produto_id, SUM(quantidade) as total_estoque FROM estoque GROUP BY produto_id HAVING total_estoque < 10) as baixo
+            SELECT COUNT(DISTINCT produto_id) as estoque_baixo 
+            FROM estoque 
+            GROUP BY produto_id 
+            HAVING SUM(quantidade) < 10
         """)
-        estoque_baixo = cursor.fetchone()
+        estoque_baixo_result = cursor.fetchone()
+        estoque_baixo = estoque_baixo_result['estoque_baixo'] if estoque_baixo_result else 0
         
-        # Vendas últimos 7 dias
+        # Vendas últimos 7 dias - CORRIGIDO
         cursor.execute("""
             SELECT DATE(data_venda) as data, COALESCE(SUM(valor_total), 0) as total 
-            FROM vendas WHERE data_venda >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY DATE(data_venda) ORDER BY data
+            FROM vendas 
+            WHERE data_venda >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(data_venda) 
+            ORDER BY data
         """)
         vendas_db = cursor.fetchall()
         
-        # Preencher datas faltantes
+        # Preencher datas faltantes - CORRIGIDO
         datas_completas = []
+        datas_labels = []  # Labels formatados para o gráfico
+        
         for i in range(7):
             data_alvo = (datetime.now() - timedelta(days=6-i)).date()
             total = 0
+            
+            # Buscar valor para esta data
             for venda in vendas_db:
-                venda_data = venda['data'].date() if hasattr(venda['data'], 'date') else venda['data']
+                venda_data = venda['data']
                 if venda_data == data_alvo:
                     total = float(venda['total'])
                     break
-            datas_completas.append({'data': data_alvo, 'total': total})
+            
+            # Formatar data para exibição
+            data_formatada = data_alvo.strftime('%d/%m')
+            datas_completas.append(total)  # Apenas os valores
+            datas_labels.append(data_formatada)  # Labels separados
         
         # Produtos mais vendidos
         cursor.execute("""
             SELECT p.nome, SUM(iv.quantidade) as total_vendido, 
                    SUM(iv.quantidade * iv.preco_unitario) as receita
-            FROM itens_venda iv JOIN produtos p ON iv.produto_id = p.id
-            GROUP BY p.id, p.nome ORDER BY total_vendido DESC LIMIT 5
+            FROM itens_venda iv 
+            JOIN produtos p ON iv.produto_id = p.id
+            GROUP BY p.id, p.nome 
+            ORDER BY total_vendido DESC 
+            LIMIT 5
         """)
         produtos_mais_vendidos = cursor.fetchall()
         
@@ -96,53 +113,177 @@ def dashboard():
         """)
         vendas_por_categoria = cursor.fetchall()
         
-        # Atividades recentes
+        # Atividades recentes (vendas) - CORRIGIDO
         cursor.execute("""
-            SELECT v.data_venda as data, v.forma_pagamento, v.valor_total as valor,
-                   COUNT(iv.id) as itens
+            SELECT v.data_venda as data, v.forma_pagamento, v.valor_total as valor
             FROM vendas v
-            LEFT JOIN itens_venda iv ON v.id = iv.venda_id
-            GROUP BY v.id
             ORDER BY v.data_venda DESC
             LIMIT 5
         """)
-        atividades_recentes = cursor.fetchall()
+        atividades_recentes_raw = cursor.fetchall()
+        
+        # Processar atividades para formato adequado
+        atividades_recentes = []
+        for atividade in atividades_recentes_raw:
+            atividades_recentes.append({
+                'data': atividade['data'],
+                'forma_pagamento': atividade['forma_pagamento'],
+                'valor': float(atividade['valor'])
+            })
 
         cursor.close()
         conn.close()
 
-        # Renderizar o template com valores padrão para evitar erros
+        # Calcular crescimento (exemplo simplificado)
+        crescimento = 12.5
+
         return render_template(
-            "dashboard.html",
-            vendas_hoje=float(vendas_hoje.get('total_vendas_hoje', 0)),
-            total_produtos=total_produtos.get('total_produtos', 0),
-            novos_usuarios=novos_usuarios.get('novos_usuarios', 0),
-            estoque_baixo=estoque_baixo.get('estoque_baixo', 0),
-            vendas_7_dias=datas_completas,
+            "/pages/dashboard.html",
+            vendas_hoje=float(vendas_hoje),
+            total_produtos=total_produtos,
+            novos_usuarios=novos_usuarios,
+            estoque_baixo=estoque_baixo,
+            vendas_7_dias=datas_completas,  # Apenas valores
+            vendas_labels=datas_labels,     # Labels separados
             produtos_mais_vendidos=produtos_mais_vendidos,
             vendas_por_categoria=vendas_por_categoria,
             atividades_recentes=atividades_recentes,
-            crescimento=15.5,  # Exemplo fixo
+            crescimento=crescimento,
             now=datetime.now()
         )
 
     except Exception as e:
         print(f"Erro ao carregar a dashboard: {e}")
+        import traceback
+        traceback.print_exc()
+        
         # Retornar dados de exemplo em caso de erro
         hoje = datetime.now().date()
+        datas_exemplo = [0, 0, 0, 0, 0, 0, 0]
+        labels_exemplo = [(hoje - timedelta(days=i)).strftime('%d/%m') for i in range(6, -1, -1)]
+        
         return render_template(
-            "dashboard.html",
+            "/pages/dashboard.html",
             vendas_hoje=0,
             total_produtos=0,
             novos_usuarios=0,
             estoque_baixo=0,
-            vendas_7_dias=[],
+            vendas_7_dias=datas_exemplo,
+            vendas_labels=labels_exemplo,
             produtos_mais_vendidos=[],
             vendas_por_categoria=[],
             atividades_recentes=[],
             crescimento=0,
             now=datetime.now()
         )
+
+@app.route("/estoque")
+def estoque():
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Coletar parâmetros de filtro da URL
+    categorias_filtro = request.args.getlist('categoria')
+    tamanhos_filtro = request.args.getlist('tamanho')
+    cores_filtro = request.args.getlist('cor')
+    precos_filtro = request.args.getlist('preco')
+
+    # Query base para produtos ATIVOS
+    sql_ativos = """
+        SELECT DISTINCT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id, p.ativo
+        FROM produtos p
+        WHERE p.ativo = TRUE
+    """
+    
+    # Query base para produtos DESATIVADOS
+    sql_desativados = """
+        SELECT DISTINCT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id, p.ativo
+        FROM produtos p
+        WHERE p.ativo = FALSE
+    """
+    
+    # Função auxiliar para aplicar filtros
+    def aplicar_filtros(sql_base, params):
+        sql = sql_base
+        local_params = params.copy()
+        
+        if categorias_filtro:
+            placeholders = ','.join(['%s'] * len(categorias_filtro))
+            sql += f" AND p.categoria_id IN ({placeholders})"
+            local_params.extend(categorias_filtro)
+
+        if tamanhos_filtro:
+            sql += """
+                AND EXISTS (
+                    SELECT 1 FROM estoque e 
+                    WHERE e.produto_id = p.id 
+                    AND e.tamanho_id IN ({})
+                )
+            """.format(','.join(['%s'] * len(tamanhos_filtro)))
+            local_params.extend(tamanhos_filtro)
+
+        if cores_filtro:
+            sql += """
+                AND EXISTS (
+                    SELECT 1 FROM estoque e 
+                    WHERE e.produto_id = p.id 
+                    AND e.cor_id IN ({})
+                )
+            """.format(','.join(['%s'] * len(cores_filtro)))
+            local_params.extend(cores_filtro)
+
+        # Filtro por preço
+        if precos_filtro:
+            condicoes_preco = []
+            for preco_range in precos_filtro:
+                if preco_range == '0-50':
+                    condicoes_preco.append("p.preco <= 50")
+                elif preco_range == '50-100':
+                    condicoes_preco.append("p.preco BETWEEN 50 AND 100")
+                elif preco_range == '100-200':
+                    condicoes_preco.append("p.preco BETWEEN 100 AND 200")
+                elif preco_range == '200+':
+                    condicoes_preco.append("p.preco > 200")
+            
+            if condicoes_preco:
+                sql += " AND (" + " OR ".join(condicoes_preco) + ")"
+        
+        # Ordenação
+        sql += " ORDER BY p.nome"
+        
+        return sql, local_params
+
+    # Aplicar filtros para ativos e desativados
+    sql_ativos_filtrado, params_ativos = aplicar_filtros(sql_ativos, [])
+    sql_desativados_filtrado, params_desativados = aplicar_filtros(sql_desativados, [])
+
+    # Executar queries
+    cursor.execute(sql_ativos_filtrado, params_ativos)
+    produtos_ativos = cursor.fetchall()
+
+    cursor.execute(sql_desativados_filtrado, params_desativados)
+    produtos_desativados = cursor.fetchall()
+
+    # Buscar categorias, tamanhos e cores para o filtro
+    cursor.execute("SELECT id, nome FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM tamanhos")
+    tamanhos = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM cores")
+    cores = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+
+    return render_template("/pages/estoque.html", 
+                         produtos_ativos=produtos_ativos,
+                         produtos_desativados=produtos_desativados,
+                         categorias=categorias, 
+                         tamanhos=tamanhos, 
+                         cores=cores)
+
     
 @app.route("/cadastro", methods=['GET', 'POST'])
 def cadastro():
@@ -232,6 +373,96 @@ def cadastro():
             return render_template("auth/cadastro.html")
     return render_template("auth/cadastro.html")
 
+@app.route("/editar_usuario/<int:usuario_id>", methods=['GET', 'POST'])
+def editar_usuario(usuario_id):
+    if request.method == 'POST':
+        nome_completo = request.form.get('nome_completo', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        telefone = request.form.get('telefone', '').strip()
+        cpf = request.form.get('cpf', '').strip()
+        nascimento = request.form.get('nascimento', '')
+
+        erros = []
+
+        if not nome_completo:
+            erros.append('O nome completo é obrigatório.')
+        
+        if not email or '@' not in email:
+            erros.append('E-mail inválido.')
+        
+        if not telefone:
+            erros.append('Telefone é obrigatório.')
+        
+        if not cpf or len(cpf) < 11:
+            erros.append('CPF inválido.')
+        
+        if not nascimento:
+            erros.append('Data de nascimento é obrigatória.')
+        else:
+            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
+            idade = (datetime.now() - nascimento_date).days // 365
+            if idade < 18:
+                erros.append('É necessário ter 18 anos ou mais para se cadastrar.')
+        
+        if erros:
+            for erro in erros:
+                flash(erro, 'error')
+            return render_template("auth/usuario.html")
+
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor()
+
+            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+            if cursor.fetchone():
+                flash('Este e-mail já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
+            if cursor.fetchone():
+                flash('Este CPF já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            sql_inserir = """
+                INSERT INTO usuarios 
+                (nome_completo, email, telefone, cpf, nascimento)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento))
+            conexao.commit()
+
+            usuario_id = cursor.lastrowid
+
+            cursor.close()
+            conexao.close()
+
+            session['usuario_id'] = usuario_id
+            session['usuario_nome'] = nome_completo
+            session['usuario_email'] = email
+
+            flash('Edição realizada com sucesso! Bem-vindo(a) novamente à MAGDA.', 'success')
+            return redirect('/usuario')
+
+        except mysql.connector.Error as err:
+            flash(f'Erro no banco de dados: {err}', 'error')
+            return render_template("auth/editar_usuario.html")
+        except Exception as e:
+            flash(f'Erro inesperado: {str(e)}', 'error')
+            return render_template("auth/editar_usuario.html")
+    elif request.method == 'GET':
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
+        usuario = cursor.fetchone()
+        nome_completo = usuario["nome_completo"]
+        email = usuario["email"]
+        telefone = usuario["telefone"]
+        cpf = usuario["cpf"]
+        nascimento = usuario["nascimento"]
+
+        return render_template("auth/editar_usuario.html", nome_completo=nome_completo, cpf=cpf, email=email, telefone=telefone, nascimento=nascimento)
+    return render_template("auth/editar_usuario.html")
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -281,8 +512,6 @@ def logout():
     flash('Você saiu da sua conta.', 'info')
     return redirect('/')
 
-# ... (mantenha as outras rotas)
-
 @app.route("/usuario")
 def usuario():
     if "usuario_id" not in session:
@@ -327,173 +556,86 @@ def produtos():
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
 
+    # Coletar parâmetros de filtro da URL
+    categorias_filtro = request.args.getlist('categoria')
+    tamanhos_filtro = request.args.getlist('tamanho')
+    cores_filtro = request.args.getlist('cor')
+    precos_filtro = request.args.getlist('preco')
+
+    # Query base
     sql = """
-        SELECT p.id, p.nome, p.preco, p.imagem, p.destaque
+        SELECT DISTINCT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
         FROM produtos p
         WHERE p.ativo = TRUE
     """
-    cursor.execute(sql)
+    params = []
+
+    # Aplicar filtros
+    if categorias_filtro:
+        placeholders = ','.join(['%s'] * len(categorias_filtro))
+        sql += f" AND p.categoria_id IN ({placeholders})"
+        params.extend(categorias_filtro)
+
+    if tamanhos_filtro:
+        sql += """
+            AND EXISTS (
+                SELECT 1 FROM estoque e 
+                WHERE e.produto_id = p.id 
+                AND e.tamanho_id IN ({})
+            )
+        """.format(','.join(['%s'] * len(tamanhos_filtro)))
+        params.extend(tamanhos_filtro)
+
+    if cores_filtro:
+        sql += """
+            AND EXISTS (
+                SELECT 1 FROM estoque e 
+                WHERE e.produto_id = p.id 
+                AND e.cor_id IN ({})
+            )
+        """.format(','.join(['%s'] * len(cores_filtro)))
+        params.extend(cores_filtro)
+
+    # Filtro por preço
+    if precos_filtro:
+        condicoes_preco = []
+        for preco_range in precos_filtro:
+            if preco_range == '0-50':
+                condicoes_preco.append("p.preco <= 50")
+            elif preco_range == '50-100':
+                condicoes_preco.append("p.preco BETWEEN 50 AND 100")
+            elif preco_range == '100-200':
+                condicoes_preco.append("p.preco BETWEEN 100 AND 200")
+            elif preco_range == '200+':
+                condicoes_preco.append("p.preco > 200")
+        
+        if condicoes_preco:
+            sql += " AND (" + " OR ".join(condicoes_preco) + ")"
+
+    # Ordenação
+    sql += " ORDER BY p.nome"
+
+    cursor.execute(sql, params)
     produtos = cursor.fetchall()
+
+    # Buscar categorias, tamanhos e cores para o filtro
+    cursor.execute("SELECT id, nome FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM tamanhos")
+    tamanhos = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM cores")
+    cores = cursor.fetchall()
 
     cursor.close()
     conexao.close()
 
-    return render_template("/pages/produtos.html", produtos=produtos)
-
-@app.route("/camisetas")
-def categoria_camisetas():
-    try:
-        print("=== INICIANDO ROTA CAMISETAS ===")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-
-        sql = """
-            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-            FROM produtos p
-            WHERE p.ativo = TRUE AND p.categoria_id = 1
-        """
-        
-        print("Executando SQL...")
-        cursor.execute(sql)
-        produtos = cursor.fetchall()
-        
-        print(f"Produtos encontrados no banco: {len(produtos)}")
-        
-        cursor.close()
-        conexao.close()
-
-        return render_template("/pages/camisetas.html", produtos=produtos)
-    
-    except Exception as e:
-        print(f"ERRO NA ROTA: {e}")
-        import traceback
-        traceback.print_exc()
-        return render_template("/pages/camisetas.html", produtos=[])
-
-@app.route("/casacos")
-def categoria_casacos():
-    try:
-        print("=== INICIANDO ROTA CASACOS ===")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-
-        sql = """
-            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-            FROM produtos p
-            WHERE p.ativo = TRUE AND p.categoria_id = 2
-        """
-        
-        print("Executando SQL...")
-        cursor.execute(sql)
-        produtos = cursor.fetchall()
-        
-        print(f"Produtos encontrados no banco: {len(produtos)}")
-        
-        cursor.close()
-        conexao.close()
-
-        return render_template("/pages/casacos.html", produtos=produtos)
-    
-    except Exception as e:
-        print(f"ERRO NA ROTA: {e}")
-        import traceback
-        traceback.print_exc()
-        return render_template("/pages/casacos.html", produtos=[])
-
-@app.route("/calcas")
-def categoria_calcas():
-    try:
-        print("=== INICIANDO ROTA CALÇAS ===")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-
-        sql = """
-            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-            FROM produtos p
-            WHERE p.ativo = TRUE AND p.categoria_id = 3
-        """
-        
-        print("Executando SQL...")
-        cursor.execute(sql)
-        produtos = cursor.fetchall()
-        
-        print(f"Produtos encontrados no banco: {len(produtos)}")
-        
-        cursor.close()
-        conexao.close()
-
-        return render_template("/pages/calcas.html", produtos=produtos)
-    
-    except Exception as e:
-        print(f"ERRO NA ROTA: {e}")
-        import traceback
-        traceback.print_exc()
-        return render_template("/pages/calcas.html", produtos=[])
-
-@app.route("/bermudas")
-def categoria_bermudas():
-    try:
-        print("=== INICIANDO ROTA BERMUDAS ===")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-
-        sql = """
-            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-            FROM produtos p
-            WHERE p.ativo = TRUE AND p.categoria_id = 4
-        """
-        
-        print("Executando SQL...")
-        cursor.execute(sql)
-        produtos = cursor.fetchall()
-        
-        print(f"Produtos encontrados no banco: {len(produtos)}")
-        
-        cursor.close()
-        conexao.close()
-
-        return render_template("/pages/bermudas.html", produtos=produtos)
-    
-    except Exception as e:
-        print(f"ERRO NA ROTA: {e}")
-        import traceback
-        traceback.print_exc()
-        return render_template("/pages/bermudas.html", produtos=[])
-
-@app.route("/acessorios")
-def categoria_acessorios():
-    try:
-        print("=== INICIANDO ROTA ACESSÓRIOS ===")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-
-        sql = """
-            SELECT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-            FROM produtos p
-            WHERE p.ativo = TRUE AND p.categoria_id = 5
-        """
-        
-        print("Executando SQL...")
-        cursor.execute(sql)
-        produtos = cursor.fetchall()
-        
-        print(f"Produtos encontrados no banco: {len(produtos)}")
-        
-        cursor.close()
-        conexao.close()
-
-        return render_template("/pages/acessorios.html", produtos=produtos)
-    
-    except Exception as e:
-        print(f"ERRO NA ROTA: {e}")
-        import traceback
-        traceback.print_exc()
-        return render_template("/pages/acessorios.html", produtos=[])
+    return render_template("/pages/produtos.html", 
+                         produtos=produtos, 
+                         categorias=categorias, 
+                         tamanhos=tamanhos, 
+                         cores=cores)
 
 
 @app.route("/carrinho")
@@ -599,7 +741,7 @@ def salvar_produto():
 
     return redirect("/produtos")
 
-@app.route("/editar/<int:id>")
+@app.route("/editar_produto/<int:id>")
 def editar_produto(id):
     try:
         conexao = conectar()
@@ -763,7 +905,7 @@ def desativar_produto(id):
     finally:
         cursor.close()
         conexao.close()  
-    return redirect("/produtos")
+    return redirect("/estoque")
 
 @app.route("/reativar_produto/<int:id>")
 def reativar_produto(id):
@@ -781,7 +923,7 @@ def reativar_produto(id):
         cursor.close()
         conexao.close()
     
-    return redirect("/produtos")
+    return redirect("/estoque")
 
 @app.route("/visualizacao/<int:produto_id>")
 def visualizar_produto(produto_id):
@@ -805,32 +947,30 @@ def visualizar_produto(produto_id):
         produtos_relacionados = cursor.fetchall()
     else:
         produtos_relacionados = []
-    
-    cursor.close()
-    conexao.close()
 
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    cursor.execute("""SELECT DISTINCT c.id, c.nome 
-                FROM cores c
-                JOIN estoque e ON e.cor_id = c.id
-                JOIN produtos p ON p.id = e.produto_id
-                WHERE p.id = %s AND p.ativo = TRUE
-                ORDER BY c.nome  """, (produto_id,))
-    cores = cursor.fetchall()
-    cursor.close()
-    conexao.close()
-
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
     cursor.execute("""SELECT DISTINCT t.id, t.nome 
                 FROM tamanhos t
                 JOIN estoque e ON e.tamanho_id = t.id
                 JOIN produtos p ON p.id = e.produto_id
                 WHERE p.id = %s AND p.ativo = TRUE ORDER BY t.id""", (produto_id,))
     tamanhos = cursor.fetchall()
+
+    cursor.execute("""SELECT DISTINCT c.id, c.nome, e.tamanho_id, e.quantidade
+                FROM cores c
+                JOIN estoque e ON e.cor_id = c.id
+                JOIN produtos p ON p.id = e.produto_id
+                WHERE p.id = %s AND p.ativo = TRUE
+                ORDER BY c.nome  """, (produto_id,))
+    cores = cursor.fetchall()
+
+    print(tamanhos)
+    print(cores)
+
     cursor.close()
     conexao.close()
+
+    print(cores)
+    print(tamanhos)
     
     if produto:
         return render_template("/pages/visualizacao.html", produto=produto, produtos_relacionados=produtos_relacionados, cores=cores, tamanhos=tamanhos)
@@ -856,13 +996,9 @@ def toggle_destaque(id):
     
     return redirect("/produtos")
 
-def conectar():
-    return mysql.connector.connect(
-        host='localhost', 
-        user='root', 
-        port='3406', 
-        database='crew_magda'
-    )
-
+@app.route("/gerenciar_clientes")
+def clientes():   
+   return render_template("/auth/gerenciar_clientes.html")
+   
 if __name__ == "__main__":
     app.run(debug=True)

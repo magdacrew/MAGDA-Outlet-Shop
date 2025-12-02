@@ -54,9 +54,6 @@
                     <label for="cor">Cor:</label>
                     <select name="cor_id" id="cor" required>
                         <option disabled selected value="">Selecione...</option>
-                        {% for cor in cores %}
-                        <option value="{{ cor.id }}">{{ cor.nome }}</option>
-                        {% endfor %}
                     </select>
                 </div>
                 
@@ -64,7 +61,7 @@
                     <label for="quantidade">Quantidade:</label>
                     <div class="quantidade-selector">
                         <button type="button" class="quantidade-btn" id="diminuir">-</button>
-                        <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
+                        <input type="number" id="quantidade" name="quantidade" value="1" min="1">
                         <button type="button" class="quantidade-btn" id="aumentar">+</button>
                     </div>
                 </div>
@@ -123,5 +120,51 @@
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Passar os dados do Python para JavaScript
+        const tamanhos = {{ tamanhos | tojson }};
+        const cores = {{ cores | tojson }};
+        
+        document.getElementById('tamanho').addEventListener('change', function() {
+            const tamanhoId = parseInt(this.value);
+            const corSelect = document.getElementById('cor');
+            
+            // Limpar opções anteriores
+            corSelect.innerHTML = '<option disabled selected value="">Selecione uma cor</option>';
+            
+            // Filtrar cores pelo tamanho selecionado
+            const coresFiltradas = cores.filter(cor => cor.tamanho_id === tamanhoId);
+            
+            if (coresFiltradas.length > 0) {
+                coresFiltradas.forEach(cor => {
+                    const option = document.createElement('option');
+                    option.value = cor.id;
+                    option.textContent = cor.nome;
+                    corSelect.appendChild(option);
+                });
+                corSelect.disabled = false;
+            } else {
+                corSelect.innerHTML = '<option disabled selected value="">Nenhuma cor disponível</option>';
+                corSelect.disabled = true;
+            }
+        });
+
+        document.getElementById('cor').addEventListener('change', function() {
+            const corId = parseInt(this.value);
+            const tamanhoId = parseInt(document.getElementById('tamanho').value);
+            const quantidadeInput = document.getElementById('quantidade');
+            
+            // Encontrar o estoque para a combinação selecionada
+            const corSelecionada = cores.find(cor => cor.id === corId && cor.tamanho_id === tamanhoId);
+            const quantidadeDisponivel = corSelecionada ? corSelecionada.quantidade : 0;
+            console.log(quantidadeDisponivel);
+            
+            // Atualizar o atributo max do input de quantidade
+            quantidadeInput.max = quantidadeDisponivel;
+            if (parseInt(quantidadeInput.value) > quantidadeDisponivel) {
+                quantidadeInput.value = quantidadeDisponivel > 0 ? quantidadeDisponivel : 1;
+            }
+        });
+    </script>
 </body>
 </html>
