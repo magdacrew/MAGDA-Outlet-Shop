@@ -10,11 +10,69 @@
     </ul>
     
     <div class="nav-icons">
-        <a href="/carrinho">
+        <!-- Alterado para abrir carrinho via JavaScript -->
+        <a href="#" id="carrinho-btn" class="carrinho-link">
             <img src="/static/images/carrinho.png" class="nav-icon">
+            <span id="carrinho-quantidade" class="carrinho-quantidade">0</span>
         </a>
         <a href="/usuario">
             <img src="/static/images/usuario.png" class="nav-icon">
         </a>
     </div>
 </nav>
+
+<!-- Carrinho Sidebar (adicionar após a navbar) -->
+<div id="carrinho-sidebar" class="carrinho-sidebar">
+    <div class="carrinho-header">
+        <h2>CARRINHO DE COMPRAS</h2>
+        <button id="fechar-carrinho" class="fechar-carrinho">&times;</button>
+    </div>
+    
+    <div id="carrinho-itens" class="carrinho-itens">
+        <!-- Itens serão adicionados dinamicamente aqui -->
+        <div class="carrinho-vazio">
+            <p>Seu carrinho está vazio</p>
+        </div>
+    </div>
+    
+    <div class="carrinho-resumo">
+        
+        <div class="carrinho-frete">
+            <div class="frete-header">
+                <h4>CALCULAR FRETE</h4>
+                <button id="calcular-frete" class="btn-calcular-frete">Calcular</button>
+            </div>
+            <div class="frete-input">
+                <input type="text" id="cep-frete" placeholder="Digite seu CEP" maxlength="9">
+                <small>Exemplo: 89200-000</small>
+            </div>
+            <div id="frete-resultados" class="frete-resultados">
+                <!-- Resultados do frete aparecerão aqui -->
+            </div>
+            <div id="frete-selecionado" class="frete-selecionado" style="display: none;">
+                <span id="frete-tipo"></span>
+                <span id="frete-valor"></span>
+            </div>
+        </div>
+
+        <div class="carrinho-subtotal">
+            <span>Subtotal (sem frete):</span>
+            <span id="carrinho-subtotal">R$ 0,00</span>
+        </div>
+        
+        <div class="carrinho-total">
+            <span>Total:</span>
+            <span id="carrinho-total">R$ 0,00</span>
+        </div>
+        
+        <div class="carrinho-parcelado">
+            <span>Ou <span id="carrinho-parcelado">R$ 0,00</span> com Nuvem Pago</span>
+        </div>
+        
+        <button id="iniciar-compra" class="btn-iniciar-compra" disabled>INICIAR COMPRA</button>
+        
+        <a href="/produtos" class="ver-mais-produtos">Ver mais produtos</a>
+    </div>
+</div>
+
+<div id="carrinho-overlay" class="carrinho-overlay"></div>

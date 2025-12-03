@@ -35,6 +35,33 @@ def home():
 
     return render_template("/pages/index.html", produtos_destaque=produtos_destaque)
 
+@app.route("/sobre")
+def about():
+    return render_template("/pages/sobre.html")
+
+@app.route("/contato")
+def contato():
+    return render_template("/pages/contato.html")
+
+@app.route("/produto/<int:id>/destaque", methods=['POST'])
+def toggle_destaque(id):
+    
+    conexao = conectar()
+    cursor = conexao.cursor()
+    
+    try:
+        sql = "UPDATE produtos SET destaque = NOT destaque WHERE id = %s"
+        cursor.execute(sql, (id,))
+        conexao.commit()
+    except Exception as e:
+        conexao.rollback()
+        return f"Erro: {str(e)}", 500
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    return redirect("/produtos")
+
 @app.route("/dashboard")
 def dashboardmagda():
     try:
@@ -176,6 +203,10 @@ def dashboardmagda():
             crescimento=0,
             now=datetime.now()
         )
+    
+@app.route("/gerenciar_clientes")
+def clientes():   
+   return render_template("/auth/gerenciar_clientes.html")
 
 @app.route("/estoque")
 def estoque():
@@ -284,364 +315,6 @@ def estoque():
                          tamanhos=tamanhos, 
                          cores=cores)
 
-    
-@app.route("/cadastro", methods=['GET', 'POST'])
-def cadastro():
-    if request.method == 'POST':
-        nome_completo = request.form.get('nome_completo', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        telefone = request.form.get('telefone', '').strip()
-        cpf = request.form.get('cpf', '').strip()
-        nascimento = request.form.get('nascimento', '')
-        senha = request.form.get('senha', '')
-        confirmar_senha = request.form.get('confirmar', '')
-
-        erros = []
-
-        if not nome_completo:
-            erros.append('O nome completo é obrigatório.')
-        
-        if not email or '@' not in email:
-            erros.append('E-mail inválido.')
-        
-        if not telefone:
-            erros.append('Telefone é obrigatório.')
-        
-        if not cpf or len(cpf) < 11:
-            erros.append('CPF inválido.')
-        
-        if not nascimento:
-            erros.append('Data de nascimento é obrigatória.')
-        else:
-            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
-            idade = (datetime.now() - nascimento_date).days // 365
-            if idade < 18:
-                erros.append('É necessário ter 18 anos ou mais para se cadastrar.')
-        
-        if not senha or len(senha) < 6:
-            erros.append('A senha deve ter pelo menos 6 caracteres.')
-        
-        if senha != confirmar_senha:
-            erros.append('As senhas não coincidem.')
-
-        if erros:
-            for erro in erros:
-                flash(erro, 'error')
-            return render_template("auth/cadastro.html")
-
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor()
-
-            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
-            if cursor.fetchone():
-                flash('Este e-mail já está cadastrado.', 'error')
-                return render_template("auth/cadastro.html")
-
-            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
-            if cursor.fetchone():
-                flash('Este CPF já está cadastrado.', 'error')
-                return render_template("auth/cadastro.html")
-
-            senha_hash = generate_password_hash(senha)
-
-            sql_inserir = """
-                INSERT INTO usuarios 
-                (nome_completo, email, telefone, cpf, nascimento, senha_hash)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento, senha_hash))
-            conexao.commit()
-
-            usuario_id = cursor.lastrowid
-
-            cursor.close()
-            conexao.close()
-
-            session['usuario_id'] = usuario_id
-            session['usuario_nome'] = nome_completo
-            session['usuario_email'] = email
-
-            flash('Cadastro realizado com sucesso! Bem-vindo(a) à MAGDA.', 'success')
-            return redirect('/usuario')
-
-        except mysql.connector.Error as err:
-            flash(f'Erro no banco de dados: {err}', 'error')
-            return render_template("auth/cadastro.html")
-        except Exception as e:
-            flash(f'Erro inesperado: {str(e)}', 'error')
-            return render_template("auth/cadastro.html")
-    return render_template("auth/cadastro.html")
-
-@app.route("/editar_usuario/<int:usuario_id>", methods=['GET', 'POST'])
-def editar_usuario(usuario_id):
-    if request.method == 'POST':
-        nome_completo = request.form.get('nome_completo', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        telefone = request.form.get('telefone', '').strip()
-        cpf = request.form.get('cpf', '').strip()
-        nascimento = request.form.get('nascimento', '')
-
-        erros = []
-
-        if not nome_completo:
-            erros.append('O nome completo é obrigatório.')
-        
-        if not email or '@' not in email:
-            erros.append('E-mail inválido.')
-        
-        if not telefone:
-            erros.append('Telefone é obrigatório.')
-        
-        if not cpf or len(cpf) < 11:
-            erros.append('CPF inválido.')
-        
-        if not nascimento:
-            erros.append('Data de nascimento é obrigatória.')
-        else:
-            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
-            idade = (datetime.now() - nascimento_date).days // 365
-            if idade < 18:
-                erros.append('É necessário ter 18 anos ou mais para se cadastrar.')
-        
-        if erros:
-            for erro in erros:
-                flash(erro, 'error')
-            return render_template("auth/usuario.html")
-
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor()
-
-            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
-            if cursor.fetchone():
-                flash('Este e-mail já está cadastrado.', 'error')
-                return render_template("auth/cadastro.html")
-
-            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
-            if cursor.fetchone():
-                flash('Este CPF já está cadastrado.', 'error')
-                return render_template("auth/cadastro.html")
-
-            sql_inserir = """
-                INSERT INTO usuarios 
-                (nome_completo, email, telefone, cpf, nascimento)
-                VALUES (%s, %s, %s, %s, %s)
-            """
-            cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento))
-            conexao.commit()
-
-            usuario_id = cursor.lastrowid
-
-            cursor.close()
-            conexao.close()
-
-            session['usuario_id'] = usuario_id
-            session['usuario_nome'] = nome_completo
-            session['usuario_email'] = email
-
-            flash('Edição realizada com sucesso! Bem-vindo(a) novamente à MAGDA.', 'success')
-            return redirect('/usuario')
-
-        except mysql.connector.Error as err:
-            flash(f'Erro no banco de dados: {err}', 'error')
-            return render_template("auth/editar_usuario.html")
-        except Exception as e:
-            flash(f'Erro inesperado: {str(e)}', 'error')
-            return render_template("auth/editar_usuario.html")
-    elif request.method == 'GET':
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
-        usuario = cursor.fetchone()
-        nome_completo = usuario["nome_completo"]
-        email = usuario["email"]
-        telefone = usuario["telefone"]
-        cpf = usuario["cpf"]
-        nascimento = usuario["nascimento"]
-
-        return render_template("auth/editar_usuario.html", nome_completo=nome_completo, cpf=cpf, email=email, telefone=telefone, nascimento=nascimento)
-    return render_template("auth/editar_usuario.html")
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        senha = request.form.get('senha', '')
-
-        if not email or not senha:
-            flash('Por favor, preencha todos os campos.', 'error')
-            return render_template("auth/login.html")
-
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor(dictionary=True)
-
-            # Buscar usuário pelo email
-            cursor.execute("""
-                SELECT id, nome_completo, email, senha_hash 
-                FROM usuarios 
-                WHERE email = %s
-            """, (email,))
-            
-            usuario = cursor.fetchone()
-            cursor.close()
-            conexao.close()
-
-            if usuario and check_password_hash(usuario['senha_hash'], senha):
-                # Login bem-sucedido
-                session['usuario_id'] = usuario['id']
-                session['usuario_nome'] = usuario['nome_completo']
-                session['usuario_email'] = usuario['email']
-                
-                flash(f'Bem-vindo(a) de volta, {usuario["nome_completo"]}!', 'success')
-                return redirect('/')
-            else:
-                flash('E-mail ou senha incorretos.', 'error')
-                return render_template("auth/login.html")
-
-        except Exception as e:
-            flash(f'Erro ao fazer login: {str(e)}', 'error')
-            return render_template("auth/login.html")
-
-    return render_template("auth/login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash('Você saiu da sua conta.', 'info')
-    return redirect('/')
-
-@app.route("/usuario")
-def usuario():
-    if "usuario_id" not in session:
-        flash("Você precisa estar logado para acessar sua conta.", "error")
-        return redirect("/login")
-    
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT id, nome_completo, email, telefone, cpf, nascimento, data_cadastro
-            FROM usuarios
-            WHERE id = %s
-        """, (session["usuario_id"],))
-
-        usuario = cursor.fetchone()
-
-        cursor.close()
-        conexao.close()
-
-        if not usuario:
-            flash("Usuário não encontrado.", "error")
-            return redirect("/login")
-
-        return render_template("/auth/usuario.html", usuario=usuario)
-
-    except Exception as e:
-        flash(f"Erro ao carregar informações: {str(e)}", "error")
-        return redirect("/")
-
-@app.route("/sobre")
-def about():
-    return render_template("/pages/sobre.html")
-
-@app.route("/contato")
-def contato():
-    return render_template("/pages/contato.html")
-
-@app.route("/produtos")
-def produtos():
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-
-    # Coletar parâmetros de filtro da URL
-    categorias_filtro = request.args.getlist('categoria')
-    tamanhos_filtro = request.args.getlist('tamanho')
-    cores_filtro = request.args.getlist('cor')
-    precos_filtro = request.args.getlist('preco')
-
-    # Query base
-    sql = """
-        SELECT DISTINCT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
-        FROM produtos p
-        WHERE p.ativo = TRUE
-    """
-    params = []
-
-    # Aplicar filtros
-    if categorias_filtro:
-        placeholders = ','.join(['%s'] * len(categorias_filtro))
-        sql += f" AND p.categoria_id IN ({placeholders})"
-        params.extend(categorias_filtro)
-
-    if tamanhos_filtro:
-        sql += """
-            AND EXISTS (
-                SELECT 1 FROM estoque e 
-                WHERE e.produto_id = p.id 
-                AND e.tamanho_id IN ({})
-            )
-        """.format(','.join(['%s'] * len(tamanhos_filtro)))
-        params.extend(tamanhos_filtro)
-
-    if cores_filtro:
-        sql += """
-            AND EXISTS (
-                SELECT 1 FROM estoque e 
-                WHERE e.produto_id = p.id 
-                AND e.cor_id IN ({})
-            )
-        """.format(','.join(['%s'] * len(cores_filtro)))
-        params.extend(cores_filtro)
-
-    # Filtro por preço
-    if precos_filtro:
-        condicoes_preco = []
-        for preco_range in precos_filtro:
-            if preco_range == '0-50':
-                condicoes_preco.append("p.preco <= 50")
-            elif preco_range == '50-100':
-                condicoes_preco.append("p.preco BETWEEN 50 AND 100")
-            elif preco_range == '100-200':
-                condicoes_preco.append("p.preco BETWEEN 100 AND 200")
-            elif preco_range == '200+':
-                condicoes_preco.append("p.preco > 200")
-        
-        if condicoes_preco:
-            sql += " AND (" + " OR ".join(condicoes_preco) + ")"
-
-    # Ordenação
-    sql += " ORDER BY p.nome"
-
-    cursor.execute(sql, params)
-    produtos = cursor.fetchall()
-
-    # Buscar categorias, tamanhos e cores para o filtro
-    cursor.execute("SELECT id, nome FROM categorias")
-    categorias = cursor.fetchall()
-
-    cursor.execute("SELECT id, nome FROM tamanhos")
-    tamanhos = cursor.fetchall()
-
-    cursor.execute("SELECT id, nome FROM cores")
-    cores = cursor.fetchall()
-
-    cursor.close()
-    conexao.close()
-
-    return render_template("/pages/produtos.html", 
-                         produtos=produtos, 
-                         categorias=categorias, 
-                         tamanhos=tamanhos, 
-                         cores=cores)
-
-
-@app.route("/carrinho")
-def carrinho():
-    return render_template("/pages/carrinho.html")
-
 @app.route("/novo_produto")
 def novo_produto():
     conexao = conectar()
@@ -739,7 +412,7 @@ def salvar_produto():
         cursor.close()
         conexao.close()
 
-    return redirect("/produtos")
+    return redirect("/estoque")
 
 @app.route("/editar_produto/<int:id>")
 def editar_produto(id):
@@ -888,7 +561,7 @@ def atualizar_produto(id):
             conexao.rollback()
             conexao.close()
         return f"Erro ao atualizar produto: {str(e)}", 500
-
+    
 @app.route("/desativar_produto/<int:id>")
 def desativar_produto(id):
     conexao = conectar()
@@ -924,6 +597,92 @@ def reativar_produto(id):
         conexao.close()
     
     return redirect("/estoque")
+
+@app.route("/produtos")
+def produtos():
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Coletar parâmetros de filtro da URL
+    categorias_filtro = request.args.getlist('categoria')
+    tamanhos_filtro = request.args.getlist('tamanho')
+    cores_filtro = request.args.getlist('cor')
+    precos_filtro = request.args.getlist('preco')
+
+    # Query base
+    sql = """
+        SELECT DISTINCT p.id, p.nome, p.preco, p.imagem, p.destaque, p.categoria_id
+        FROM produtos p
+        WHERE p.ativo = TRUE
+    """
+    params = []
+
+    # Aplicar filtros
+    if categorias_filtro:
+        placeholders = ','.join(['%s'] * len(categorias_filtro))
+        sql += f" AND p.categoria_id IN ({placeholders})"
+        params.extend(categorias_filtro)
+
+    if tamanhos_filtro:
+        sql += """
+            AND EXISTS (
+                SELECT 1 FROM estoque e 
+                WHERE e.produto_id = p.id 
+                AND e.tamanho_id IN ({})
+            )
+        """.format(','.join(['%s'] * len(tamanhos_filtro)))
+        params.extend(tamanhos_filtro)
+
+    if cores_filtro:
+        sql += """
+            AND EXISTS (
+                SELECT 1 FROM estoque e 
+                WHERE e.produto_id = p.id 
+                AND e.cor_id IN ({})
+            )
+        """.format(','.join(['%s'] * len(cores_filtro)))
+        params.extend(cores_filtro)
+
+    # Filtro por preço
+    if precos_filtro:
+        condicoes_preco = []
+        for preco_range in precos_filtro:
+            if preco_range == '0-50':
+                condicoes_preco.append("p.preco <= 50")
+            elif preco_range == '50-100':
+                condicoes_preco.append("p.preco BETWEEN 50 AND 100")
+            elif preco_range == '100-200':
+                condicoes_preco.append("p.preco BETWEEN 100 AND 200")
+            elif preco_range == '200+':
+                condicoes_preco.append("p.preco > 200")
+        
+        if condicoes_preco:
+            sql += " AND (" + " OR ".join(condicoes_preco) + ")"
+
+    # Ordenação
+    sql += " ORDER BY p.nome"
+
+    cursor.execute(sql, params)
+    produtos = cursor.fetchall()
+
+    # Buscar categorias, tamanhos e cores para o filtro
+    cursor.execute("SELECT id, nome FROM categorias")
+    categorias = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM tamanhos")
+    tamanhos = cursor.fetchall()
+
+    cursor.execute("SELECT id, nome FROM cores")
+    cores = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+
+    return render_template("/pages/produtos.html", 
+                         produtos=produtos, 
+                         categorias=categorias, 
+                         tamanhos=tamanhos, 
+                         cores=cores)
 
 @app.route("/visualizacao/<int:produto_id>")
 def visualizar_produto(produto_id):
@@ -976,29 +735,337 @@ def visualizar_produto(produto_id):
         return render_template("/pages/visualizacao.html", produto=produto, produtos_relacionados=produtos_relacionados, cores=cores, tamanhos=tamanhos)
     else:
         return "Produto não encontrado", 404
+
+#CARRINHO
+
+@app.route("/api/carrinho", methods=['GET'])
+def get_carrinho():
+    # Em uma implementação real, você buscaria do banco de dados
+    # Por enquanto, vamos usar session/localStorage no frontend
+    return jsonify({"message": "Carrinho gerenciado no frontend"})
+
+@app.route("/api/carrinho/add", methods=['POST'])
+def add_to_carrinho():
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
     
-@app.route("/produto/<int:id>/destaque", methods=['POST'])
-def toggle_destaque(id):
+    data = request.get_json()
     
-    conexao = conectar()
-    cursor = conexao.cursor()
+    # Validação básica
+    required_fields = ['produto_id', 'nome', 'preco']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Campo obrigatório faltando: {field}"}), 400
     
+    # Aqui você poderia adicionar lógica para salvar no banco de dados
+    # Para o carrinho baseado em sessão, o frontend gerencia
+    
+    return jsonify({
+        "success": True,
+        "message": "Produto adicionado ao carrinho",
+        "produto": data
+    })
+
+@app.route("/checkout")
+def checkout():
+    if "usuario_id" not in session:
+        flash("Você precisa fazer login para finalizar a compra", "error")
+        return redirect("/login")
+    
+    return render_template("/pages/checkout.html")
+
+@app.route("/api/produto/<int:produto_id>/estoque")
+def get_estoque_produto(produto_id):
     try:
-        sql = "UPDATE produtos SET destaque = NOT destaque WHERE id = %s"
-        cursor.execute(sql, (id,))
-        conexao.commit()
-    except Exception as e:
-        conexao.rollback()
-        return f"Erro: {str(e)}", 500
-    finally:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Buscar estoque com nomes de tamanho e cor
+        cursor.execute("""
+            SELECT e.tamanho_id, e.cor_id, e.quantidade,
+                   t.nome as tamanho_nome, c.nome as cor_nome
+            FROM estoque e
+            JOIN tamanhos t ON e.tamanho_id = t.id
+            JOIN cores c ON e.cor_id = c.id
+            WHERE e.produto_id = %s AND e.quantidade > 0
+            ORDER BY t.id, c.nome
+        """, (produto_id,))
+        
+        estoque = cursor.fetchall()
         cursor.close()
         conexao.close()
-    
-    return redirect("/produtos")
+        
+        return jsonify({
+            "success": True,
+            "estoque": estoque
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar estoque: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
-@app.route("/gerenciar_clientes")
-def clientes():   
-   return render_template("/auth/gerenciar_clientes.html")
+# CADASTRO DE USUÁRIO
+    
+@app.route("/cadastro", methods=['GET', 'POST'])
+def cadastro():
+    if request.method == 'POST':
+        nome_completo = request.form.get('nome_completo', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        telefone = request.form.get('telefone', '').strip()
+        cpf = request.form.get('cpf', '').strip()
+        nascimento = request.form.get('nascimento', '')
+        senha = request.form.get('senha', '')
+        confirmar_senha = request.form.get('confirmar', '')
+
+        erros = []
+
+        if not nome_completo:
+            erros.append('O nome completo é obrigatório.')
+        
+        if not email or '@' not in email:
+            erros.append('E-mail inválido.')
+        
+        if not telefone:
+            erros.append('Telefone é obrigatório.')
+        
+        if not cpf or len(cpf) < 11:
+            erros.append('CPF inválido.')
+        
+        if not nascimento:
+            erros.append('Data de nascimento é obrigatória.')
+        else:
+            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
+            idade = (datetime.now() - nascimento_date).days // 365
+            if idade < 18:
+                erros.append('É necessário ter 18 anos ou mais para se cadastrar.')
+        
+        if not senha or len(senha) < 6:
+            erros.append('A senha deve ter pelo menos 6 caracteres.')
+        
+        if senha != confirmar_senha:
+            erros.append('As senhas não coincidem.')
+
+        if erros:
+            for erro in erros:
+                flash(erro, 'error')
+            return render_template("auth/cadastro.html")
+
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor()
+
+            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+            if cursor.fetchone():
+                flash('Este e-mail já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
+            if cursor.fetchone():
+                flash('Este CPF já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            senha_hash = generate_password_hash(senha)
+
+            sql_inserir = """
+                INSERT INTO usuarios 
+                (nome_completo, email, telefone, cpf, nascimento, senha_hash)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento, senha_hash))
+            conexao.commit()
+
+            usuario_id = cursor.lastrowid
+
+            cursor.close()
+            conexao.close()
+
+            session['usuario_id'] = usuario_id
+            session['usuario_nome'] = nome_completo
+            session['usuario_email'] = email
+
+            flash('Cadastro realizado com sucesso! Bem-vindo(a) à MAGDA.', 'success')
+            return redirect('/usuario')
+
+        except mysql.connector.Error as err:
+            flash(f'Erro no banco de dados: {err}', 'error')
+            return render_template("auth/cadastro.html")
+        except Exception as e:
+            flash(f'Erro inesperado: {str(e)}', 'error')
+            return render_template("auth/cadastro.html")
+    return render_template("auth/cadastro.html")
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+
+        if not email or not senha:
+            flash('Por favor, preencha todos os campos.', 'error')
+            return render_template("auth/login.html")
+
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor(dictionary=True)
+
+            # Buscar usuário pelo email
+            cursor.execute("""
+                SELECT id, nome_completo, email, senha_hash 
+                FROM usuarios 
+                WHERE email = %s
+            """, (email,))
+            
+            usuario = cursor.fetchone()
+            cursor.close()
+            conexao.close()
+
+            if usuario and check_password_hash(usuario['senha_hash'], senha):
+                # Login bem-sucedido
+                session['usuario_id'] = usuario['id']
+                session['usuario_nome'] = usuario['nome_completo']
+                session['usuario_email'] = usuario['email']
+                
+                flash(f'Bem-vindo(a) de volta, {usuario["nome_completo"]}!', 'success')
+                return redirect('/')
+            else:
+                flash('E-mail ou senha incorretos.', 'error')
+                return render_template("auth/login.html")
+
+        except Exception as e:
+            flash(f'Erro ao fazer login: {str(e)}', 'error')
+            return render_template("auth/login.html")
+
+    return render_template("auth/login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash('Você saiu da sua conta.', 'info')
+    return redirect('/')
+
+@app.route("/usuario")
+def usuario():
+    if "usuario_id" not in session:
+        flash("Você precisa estar logado para acessar sua conta.", "error")
+        return redirect("/login")
+    
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT id, nome_completo, email, telefone, cpf, nascimento, data_cadastro
+            FROM usuarios
+            WHERE id = %s
+        """, (session["usuario_id"],))
+
+        usuario = cursor.fetchone()
+
+        cursor.close()
+        conexao.close()
+
+        if not usuario:
+            flash("Usuário não encontrado.", "error")
+            return redirect("/login")
+
+        return render_template("/auth/usuario.html", usuario=usuario)
+
+    except Exception as e:
+        flash(f"Erro ao carregar informações: {str(e)}", "error")
+        return redirect("/")
+
+@app.route("/editar_usuario/<int:usuario_id>", methods=['GET', 'POST'])
+def editar_usuario(usuario_id):
+    if request.method == 'POST':
+        nome_completo = request.form.get('nome_completo', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        telefone = request.form.get('telefone', '').strip()
+        cpf = request.form.get('cpf', '').strip()
+        nascimento = request.form.get('nascimento', '')
+
+        erros = []
+
+        if not nome_completo:
+            erros.append('O nome completo é obrigatório.')
+        
+        if not email or '@' not in email:
+            erros.append('E-mail inválido.')
+        
+        if not telefone:
+            erros.append('Telefone é obrigatório.')
+        
+        if not cpf or len(cpf) < 11:
+            erros.append('CPF inválido.')
+        
+        if not nascimento:
+            erros.append('Data de nascimento é obrigatória.')
+        else:
+            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
+            idade = (datetime.now() - nascimento_date).days // 365
+            if idade < 18:
+                erros.append('É necessário ter 18 anos ou mais para se cadastrar.')
+        
+        if erros:
+            for erro in erros:
+                flash(erro, 'error')
+            return render_template("auth/usuario.html")
+
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor()
+
+            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+            if cursor.fetchone():
+                flash('Este e-mail já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s", (cpf,))
+            if cursor.fetchone():
+                flash('Este CPF já está cadastrado.', 'error')
+                return render_template("auth/cadastro.html")
+
+            sql_inserir = """
+                INSERT INTO usuarios 
+                (nome_completo, email, telefone, cpf, nascimento)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_inserir, (nome_completo, email, telefone, cpf, nascimento))
+            conexao.commit()
+
+            usuario_id = cursor.lastrowid
+
+            cursor.close()
+            conexao.close()
+
+            session['usuario_id'] = usuario_id
+            session['usuario_nome'] = nome_completo
+            session['usuario_email'] = email
+
+            flash('Edição realizada com sucesso! Bem-vindo(a) novamente à MAGDA.', 'success')
+            return redirect('/usuario')
+
+        except mysql.connector.Error as err:
+            flash(f'Erro no banco de dados: {err}', 'error')
+            return render_template("auth/editar_usuario.html")
+        except Exception as e:
+            flash(f'Erro inesperado: {str(e)}', 'error')
+            return render_template("auth/editar_usuario.html")
+    elif request.method == 'GET':
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
+        usuario = cursor.fetchone()
+        nome_completo = usuario["nome_completo"]
+        email = usuario["email"]
+        telefone = usuario["telefone"]
+        cpf = usuario["cpf"]
+        nascimento = usuario["nascimento"]
+
+        return render_template("auth/editar_usuario.html", nome_completo=nome_completo, cpf=cpf, email=email, telefone=telefone, nascimento=nascimento)
+    return render_template("auth/editar_usuario.html")
    
 if __name__ == "__main__":
     app.run(debug=True)

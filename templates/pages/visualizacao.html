@@ -67,8 +67,9 @@
                 </div>
                 
                 <div class="produto-acoes">
-                    <button type="button" class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
-                    <button type="button" class="btn-comprar-agora">COMPRAR AGORA</button>
+                    <button class="btn-comprar" data-produto-id="{{ produto.id }}">
+                        ADICIONAR AO CARRINHO
+                    </button>
                 </div>
             </form>
             
@@ -107,7 +108,9 @@
                     <div class="produto-preco">
                         R$ {{ "%.2f"|format(produto_relacionado.preco) }}
                     </div>
-                    <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
+                    <button class="btn-comprar" data-produto-id="{{ produto.id }}">
+                        ADICIONAR AO CARRINHO
+                    </button>
                 </div>
                 {% endfor %}
             </div>
@@ -165,6 +168,19 @@
                 quantidadeInput.value = quantidadeDisponivel > 0 ? quantidadeDisponivel : 1;
             }
         });
+
+            // Garantir que os botões tenham os eventos corretos
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     // Seu script existente...
+            
+        //     // Inicializar botão de adicionar ao carrinho
+        //     const btnAdicionar = document.querySelector('.btn-adicionar-carrinho');
+        //     if (btnAdicionar) {
+        //         btnAdicionar.addEventListener('click', function() {
+        //             // O script.js já cuida disso
+        //         });
+        //     }
+        // });
     </script>
 </body>
 </html>

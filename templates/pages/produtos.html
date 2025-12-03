@@ -17,95 +17,73 @@
     
     <!-- CONTAINER PRINCIPAL COM FILTRO E PRODUTOS -->
     <div class="main-produtos-container">
-        
-        <!-- FILTRO NO CANTO ESQUERDO -->
+          
+                    <!-- FILTRO NO CANTO ESQUERDO -->
         <div class="filtro-lateral">
             <h3>Filtrar Produtos</h3>
             
-            <div class="accordion">
-                <!-- Accordion para Categoria -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        CATEGORIA
-                        <span class="accordion-icon">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="opcoes-filtro">
-                            {% for categoria in categorias %}
-                            <div class="opcao-item">
-                                <input type="checkbox" id="cat{{ categoria.id }}" name="categoria" value="{{ categoria.id }}">
-                                <label for="cat{{ categoria.id }}">{{ categoria.nome }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
+            <!-- Filtro por Categoria -->
+            <div class="filtro-grupo">
+                <h4>CATEGORIA</h4>
+                <div class="opcoes-filtro">
+                    {% for categoria in categorias %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="cat{{ categoria.id }}" name="categoria" value="{{ categoria.id }}">
+                        <label for="cat{{ categoria.id }}">{{ categoria.nome }}</label>
                     </div>
+                    {% endfor %}
                 </div>
-        
-                <!-- Accordion para Tamanho -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        TAMANHO
-                        <span class="accordion-icon">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="opcoes-filtro">
-                            {% for tamanho in tamanhos %}
-                            <div class="opcao-item">
-                                <input type="checkbox" id="tamanho{{ tamanho.id }}" name="tamanho" value="{{ tamanho.id }}">
-                                <label for="tamanho{{ tamanho.id }}">{{ tamanho.nome }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
+            </div>
+
+            <!-- Filtro por Tamanho -->
+            <div class="filtro-grupo">
+                <h4>TAMANHO</h4>
+                <div class="opcoes-filtro">
+                    {% for tamanho in tamanhos %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="tamanho{{ tamanho.id }}" name="tamanho" value="{{ tamanho.id }}">
+                        <label for="tamanho{{ tamanho.id }}">{{ tamanho.nome }}</label>
                     </div>
+                    {% endfor %}
                 </div>
-        
-                <!-- Accordion para Cor -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        COR
-                        <span class="accordion-icon">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="opcoes-filtro">
-                            {% for cor in cores %}
-                            <div class="opcao-item">
-                                <input type="checkbox" id="cor{{ cor.id }}" name="cor" value="{{ cor.id }}">
-                                <label for="cor{{ cor.id }}">{{ cor.nome }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
+            </div>
+
+            <!-- Filtro por Cor -->
+            <div class="filtro-grupo">
+                <h4>COR</h4>
+                <div class="opcoes-filtro">
+                    {% for cor in cores %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="cor{{ cor.id }}" name="cor" value="{{ cor.id }}">
+                        <label for="cor{{ cor.id }}">{{ cor.nome }}</label>
                     </div>
+                    {% endfor %}
                 </div>
-        
-                <!-- Accordion para Preço -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        FAIXA DE PREÇO
-                        <span class="accordion-icon">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="opcoes-filtro">
-                            <div class="opcao-item">
-                                <input type="checkbox" id="preco1" name="preco" value="0-50">
-                                <label for="preco1">Até R$ 50,00</label>
-                            </div>
-                            <div class="opcao-item">
-                                <input type="checkbox" id="preco2" name="preco" value="50-100">
-                                <label for="preco2">R$ 50,00 - R$ 100,00</label>
-                            </div>
-                            <div class="opcao-item">
-                                <input type="checkbox" id="preco3" name="preco" value="100-200">
-                                <label for="preco3">R$ 100,00 - R$ 200,00</label>
-                            </div>
-                            <div class="opcao-item">
-                                <input type="checkbox" id="preco4" name="preco" value="200+">
-                                <label for="preco4">Acima de R$ 200,00</label>
-                            </div>
-                        </div>
+            </div>
+
+            <!-- Filtro por Preço -->
+            <div class="filtro-grupo">
+                <h4>FAIXA DE PREÇO</h4>
+                <div class="opcoes-filtro">
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco1" name="preco" value="0-50">
+                        <label for="preco1">Até R$ 50,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco2" name="preco" value="50-100">
+                        <label for="preco2">R$ 50,00 - R$ 100,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco3" name="preco" value="100-200">
+                        <label for="preco3">R$ 100,00 - R$ 200,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco4" name="preco" value="200+">
+                        <label for="preco4">Acima de R$ 200,00</label>
                     </div>
                 </div>
             </div>
-        
+
             <!-- Botões de ação -->
             <div class="botoes-filtro">
                 <button type="button" class="btn-aplicar" onclick="aplicarFiltros()">Aplicar Filtros</button>
@@ -126,12 +104,68 @@
                 </a>
                 <div class="produto-nome">{{ produto.nome }}</div>
                 <div class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</div>
-                <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
+                <button class="btn-comprar" onclick="abrirModalProduto({{ produto.id }})">
+                    ADICIONAR AO CARRINHO
+                </button>
             </div>
             {% endfor %}
         </div>
     </div>
     
+    <div id="modal-produto" class="modal-produto">
+        <div class="modal-produto-content">
+            <button class="modal-fechar">&times;</button>
+            
+            <div class="modal-produto-body">
+                <div class="modal-produto-imagem">
+                    <img id="modal-imagem" src="" alt="Produto">
+                </div>
+                
+                <div class="modal-produto-info">
+                    <h2 id="modal-nome"></h2>
+                    <div class="modal-produto-preco">
+                        <span id="modal-preco"></span>
+                        <div class="modal-parcelado" id="modal-parcelado"></div>
+                    </div>
+                    
+                    <div class="modal-produto-opcoes">
+                        <div class="modal-opcao-grupo">
+                            <label for="modal-tamanho">TAMANHO</label>
+                            <div class="modal-tamanhos" id="modal-tamanhos">
+                                <!-- Tamanhos serão carregados aqui -->
+                            </div>
+                        </div>
+                        
+                        <div class="modal-opcao-grupo">
+                            <label for="modal-cor">COR</label>
+                            <div class="modal-cores" id="modal-cores">
+                                <!-- Cores serão carregadas aqui -->
+                            </div>
+                        </div>
+                        
+                        <div class="modal-opcao-grupo">
+                            <label for="modal-quantidade">QUANTIDADE</label>
+                            <div class="modal-quantidade">
+                                <button class="modal-quantidade-btn" id="modal-diminuir">-</button>
+                                <input type="number" id="modal-quantidade" value="1" min="1">
+                                <button class="modal-quantidade-btn" id="modal-aumentar">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-produto-acoes">
+                        <button class="btn-adicionar-modal" id="modal-adicionar">
+                            ADICIONAR AO CARRINHO
+                        </button>
+                        <button class="btn-comprar-modal" id="modal-comprar">
+                            COMPRAR AGORA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="footer-spacer">
         {% include 'layouts/footer.html' %}
     </div>

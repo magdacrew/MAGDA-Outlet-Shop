@@ -4,9 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MAGDA CREW</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='images/simple_magda_logo.png') }}" type="image/png">
+    
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Estilos inline para garantir funcionamento imediato */
+        .dashboard-page .navbar {
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .dashboard-page .nav-menu li a {
+            color: white !important;
+        }
+        
+        .dashboard-page .logo,
+        .dashboard-page .nav-icon {
+            filter: brightness(0) invert(1);
+        }
+    </style>
 </head>
 <body class="dashboard-page">
     
@@ -158,5 +177,75 @@
     <div class="footer-spacer">
         {% include 'layouts/footer.html' %}
     </div>
+    
+    <script>
+        // Script para garantir navbar escura no dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbar = document.querySelector('.navbar');
+            if (navbar && document.body.classList.contains('dashboard-page')) {
+                navbar.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+                navbar.style.backdropFilter = 'blur(10px)';
+                navbar.classList.add('scrolled');
+                
+                // Forçar links brancos
+                const links = navbar.querySelectorAll('a');
+                links.forEach(link => {
+                    link.style.color = 'white';
+                });
+                
+                // Forçar ícones brancos
+                const icons = navbar.querySelectorAll('img');
+                icons.forEach(icon => {
+                    icon.style.filter = 'brightness(0) invert(1)';
+                });
+            }
+            
+            // Configuração dos gráficos
+            const salesCtx = document.getElementById('salesChart');
+            const categoryCtx = document.getElementById('categoryChart');
+            
+            if (salesCtx) {
+                new Chart(salesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                        datasets: [{
+                            label: 'Vendas (R$)',
+                            data: [1200, 1900, 1500, 2500, 2200, 3000, 2800],
+                            borderColor: '#000',
+                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+            
+            if (categoryCtx) {
+                new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Camisetas', 'Calças', 'Acessórios', 'Outros'],
+                        datasets: [{
+                            data: [40, 25, 20, 15],
+                            backgroundColor: [
+                                '#000',
+                                '#333',
+                                '#666',
+                                '#999'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
