@@ -7,6 +7,9 @@
         <li><a href="/sobre">Sobre nós</a></li>
         <li><a href="/produtos">Produtos</a></li>
         <li><a href="#contato">Contato</a></li>
+        {% if usuario_logado() and eh_admin() %}
+        <li><a href="/admin/dashboard">Dashboard</a></li>
+        {% endif %}
     </ul>
     
     <div class="nav-icons">

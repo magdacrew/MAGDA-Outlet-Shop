@@ -8,23 +8,62 @@
     <!-- CSS externo -->
     <link rel="stylesheet" type="text/css" href="static/style.css">
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    
+    <style>
+        /* Garantir espaçamento adequado */
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: #f9f9f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Espaço para a navbar */
+        .navbar-spacer {
+            height: 80px;
+        }
+        
+        /* Conteúdo principal */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: calc(100vh - 160px);
+        }
+        
+        /* Footer sempre no fundo */
+        footer {
+            margin-top: auto;
+        }
+    </style>
 </head>
 <body>
      <!-- NAVBAR -->
      {% include 'layouts/navbar.html' %}
-     <!--BANNER📃-->
      
-    <div class="container margin-top-50">
-        <h1>Sobre a MAGDA Crew</h1>
+     <!-- Espaço para navbar -->
+     <div class="navbar-spacer"></div>
+     
+     <!-- CONTEÚDO PRINCIPAL -->
+     <main>
+        <!-- CONTEÚDO SOBRE -->
+        <div class="sobre-container">
+            <h1>Sobre a MAGDA Crew</h1>
+            
+            <div class="sobre-conteudo">
+                <p class="sobre-paragrafo">Fundada em Joinville – Santa Catarina, a MAGDA Crew nasceu com o propósito de levar a estética streetwear para todos que valorizam identidade, atitude e expressão própria. Mesmo sendo jovem, a marca cresce rapidamente e já se destaca pelo compromisso em entregar peças acessíveis, modernas e alinhadas às tendências urbanas.</p>
 
-        <p>Fundada em Joinville – Santa Catarina, a MAGDA Crew nasceu com o propósito de levar a estética streetwear para todos que valorizam identidade, atitude e expressão própria. Mesmo sendo jovem, a marca cresce rapidamente e já se destaca pelo compromisso em entregar peças acessíveis, modernas e alinhadas às tendências urbanas.</p>
+                <p class="sobre-paragrafo">Inspirada pela cultura de rua, pela criatividade e pelo estilo de vida das novas gerações, a MAGDA Crew busca representar o cotidiano brasileiro através de roupas que combinam conforto, design e personalidade. Cada coleção reflete a vivência das ruas, a improvisação, a autenticidade e a força cultural que moldam nosso público.</p>
 
-        <p>Inspirada pela cultura de rua, pela criatividade e pelo estilo de vida das novas gerações, a MAGDA Crew busca representar o cotidiano brasileiro através de roupas que combinam conforto, design e personalidade. Cada coleção reflete a vivência das ruas, a improvisação, a autenticidade e a força cultural que moldam nosso público.</p>
+                <p class="sobre-paragrafo">Da vibe do skate às influências da moda urbana contemporânea, seguimos expandindo nossa presença e conquistando espaço em diversas regiões do país.</p>
 
-        <p>Da vibe do skate às influências da moda urbana contemporânea, seguimos expandindo nossa presença e conquistando espaço em diversas regiões do país.</p>
-
-        <p>A MAGDA Crew é mais que roupa — é estilo, é movimento, é rua.</p>
-    </div>
+                <p class="sobre-paragrafo">A MAGDA Crew é mais que roupa — é estilo, é movimento, é rua.</p>
+            </div>
+        </div>
+     </main>
 
     <!-- Footer -->
     {% include 'layouts/footer.html' %}

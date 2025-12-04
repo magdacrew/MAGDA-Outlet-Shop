@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estoque - MAGDA CREW</title>
 
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 
 <body class="estoque-page">
@@ -107,10 +107,10 @@
                     {% for produto in produtos_ativos %}
                     <div class="estoque-card">
                         <div class="estoque-card-actions">
-                            <a href="/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
                                 <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
                             </a>
-                            <a href="/desativar_produto/{{ produto.id }}" class="estoque-btn-excluir" onclick="return confirm('Tem certeza que deseja desativar este produto?')">
+                            <a href="/admin/desativar_produto/{{ produto.id }}" class="estoque-btn-excluir" onclick="return confirm('Tem certeza que deseja desativar este produto?')">
                                 <img src="/static/images/excluir.png" alt="Botão de excluir produto" style="width:20px; height:20px;">
                             </a>
                         </div>
@@ -134,10 +134,10 @@
                     {% for produto in produtos_desativados %}
                     <div class="estoque-card estoque-card-desativado">
                         <div class="estoque-card-actions">
-                            <a href="/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
                                 <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
                             </a>
-                            <a href="/reativar_produto/{{ produto.id }}" class="estoque-btn-reativar" onclick="return confirm('Tem certeza que deseja reativar este produto?')">
+                            <a href="/admin/reativar_produto/{{ produto.id }}" class="estoque-btn-reativar" onclick="return confirm('Tem certeza que deseja reativar este produto?')">
                                 <img src="/static/images/reativar.png" alt="Botão de reativar produto" style="width:20px; height:20px;">
                             </a>
                         </div>

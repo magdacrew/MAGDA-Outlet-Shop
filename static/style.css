@@ -116,11 +116,41 @@ body {
     margin-left: auto !important;
 }
 
-/* Seção de Benefícios🟢 */
-/* Garante que as colunas fiquem lado a lado e centralizadas */
+/* ===========================
+   SEÇÃO DE BENEFÍCIOS - COM ESPAÇAMENTO
+   =========================== */
+
+/* Container principal da seção */
+.beneficios {
+    padding-top: 80px;      /* Espaço acima da seção */
+    padding-bottom: 80px;   /* Espaço abaixo da seção */
+    background-color: #ffffff; /* Garantir fundo branco se não tiver */
+}
+
+/* Título da seção */
 .beneficios h2 {
     margin-bottom: 40px !important;  /* aumenta o espaço abaixo do título */
+    text-align: center;
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    position: relative;
+    letter-spacing: -0.5px;
 }
+
+/* Linha decorativa abaixo do título (opcional, para combinar com outros títulos) */
+.beneficios h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: #000;
+    border-radius: 1px;
+}
+
 /* Container flex dos cards */
 .beneficios-container {
     display: flex;
@@ -136,18 +166,14 @@ body {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(10,10,10,0.06);
-
     width: 280px;
     height: 280px;
-
     text-align: center;
     padding: 1.4rem;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     transition: transform 260ms ease, box-shadow 260ms ease;
     cursor: pointer;
 }
@@ -165,8 +191,9 @@ body {
 
 .beneficio-card:hover {
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 22px 50px     rgba(22, 13, 13, 0.39);
+    box-shadow: 0 22px 50px rgba(22, 13, 13, 0.39);
 }
+
 /* Títulos dos benefícios (Frete Grátis, PIX, Cartão) */
 .beneficio-card h5 {
     font-size: 1.45rem;
@@ -181,9 +208,78 @@ body {
     font-size: 1.1rem;
     color: #6f6f6f;          /* Cinza suave e moderno */
     margin-top: 4px;
-    line-height: 1.5    ;
+    line-height: 1.5;
 }
 
+/* ===========================
+   RESPONSIVIDADE
+   =========================== */
+
+@media (max-width: 1024px) {
+    .beneficios {
+        padding-top: 70px;
+        padding-bottom: 70px;
+    }
+    
+    .beneficios-container {
+        gap: 1.5rem;
+    }
+    
+    .beneficio-card {
+        width: 260px;
+        height: 260px;
+    }
+}
+
+@media (max-width: 768px) {
+    .beneficios {
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+    
+    /* Permite quebra em telas menores */
+    .beneficios-container {
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+    
+    .beneficio-card {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .beneficios h2 {
+        font-size: 28px;
+        margin-bottom: 30px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .beneficios {
+        padding-top: 50px;
+        padding-bottom: 50px;
+    }
+    
+    .beneficios-container {
+        gap: 1.5rem;
+    }
+    
+    .beneficio-card {
+        width: 280px;
+        height: auto;
+        min-height: 240px;
+        padding: 1.2rem;
+    }
+    
+    .beneficio-card img {
+        width: 65px;
+    }
+    
+    .beneficios h2 {
+        font-size: 24px;
+        margin-bottom: 25px !important;
+    }
+}
   
 /* NAVBAR INVISÍVEL */
 .navbar {
@@ -374,103 +470,299 @@ body {
         gap: 12px;
     }
 }
+/* ==============================================
+   ESTILOS ESPECÍFICOS PARA PÁGINA "SOBRE"
+   ============================================== */
 
-/* Animações e Estilos Adicionais SOBRE MAGDA CREW🟢 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
-    }
-    
-    
-    body {
-    background: #f5f5f5;
-    color: #000000;
-    overflow-x: hidden;
-    }
-    
-    
-    .container {
-    max-width: 900px;
+/* Container principal da página Sobre */
+.sobre-container {
+    max-width: 800px;
+    width: 90%;
     margin: 80px auto;
-    padding: 20px;
-    text-align: center;
-    animation: fadeIn 1s ease-in-out;
-    }
-    
-    
-    h1 {
-    font-size: 2.8rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-    animation: slideDown 1s ease;
-    }
-    
-    
-    p {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    margin-bottom: 15px;
-    opacity: 0;
-    animation: fadeUp 1.4s ease forwards;
-    }
-    
-    
-    p:nth-child(3) { animation-delay: 0.3s; }
-    p:nth-child(4) { animation-delay: 0.5s; }
-    p:nth-child(5) { animation-delay: 0.7s; }
-    
-    
-    @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-    }
-    
-    
-    @keyframes slideDown {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-    }
-    
-    
-    @keyframes fadeUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-    }
-    
-    
-    .float-circle {
+    padding: 60px 50px;
+    background-color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    border: 1px solid #f0f0f0;
+}
+
+/* Efeito hover suave no container */
+.sobre-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    border-color: #e0e0e0;
+}
+
+/* Linha decorativa superior com efeito hover */
+.sobre-container::before {
+    content: "";
     position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, #000000, #333333);
+    border-radius: 0 0 10px 10px;
+    transition: all 0.4s ease;
+}
+
+.sobre-container:hover::before {
     width: 180px;
-    height: 180px;
+    background: linear-gradient(90deg, #000000, #666666);
+}
+
+/* Pontos decorativos nos cantos */
+.sobre-container::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: #000000;
     border-radius: 50%;
-    background: rgb(0, 0, 0);
-    z-index: -1;
-    animation: float 6s ease-in-out infinite;
+    top: 20px;
+    right: 20px;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+}
+
+.sobre-container:hover::after {
+    opacity: 0.6;
+    transform: scale(1.2);
+}
+
+/* Título da página Sobre */
+.sobre-container h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 50px;
+    color: #111111;
+    letter-spacing: -0.5px;
+    position: relative;
+    padding-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+/* Linha decorativa abaixo do título com animação */
+.sobre-container h1::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #000000, transparent);
+    border-radius: 3px;
+    transition: all 0.4s ease;
+}
+
+.sobre-container:hover h1::after {
+    width: 150px;
+    background: linear-gradient(90deg, transparent, #333333, transparent);
+}
+
+/* Container dos parágrafos */
+.sobre-conteudo {
+    position: relative;
+}
+
+/* Parágrafos da página Sobre */
+.sobre-paragrafo {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    margin-bottom: 30px;
+    color: #333333;
+    text-align: justify;
+    padding: 20px 25px;
+    border-radius: 12px;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-left: 3px solid transparent;
+}
+
+/* Efeito hover nos parágrafos - SETINHA REMOVIDA */
+.sobre-paragrafo:hover {
+    background-color: #fafafa;
+    transform: translateY(-2px); /* Alterado para movimento vertical */
+    border-left: 3px solid #000000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* REMOVIDO: Marcador decorativo nos parágrafos */
+/* .sobre-paragrafo::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 20px;
+    color: #000000;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.sobre-paragrafo:hover::before {
+    opacity: 0.5;
+    transform: translateX(5px);
+} */
+
+/* Linha sutil na base dos parágrafos */
+.sobre-paragrafo::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 1px;
+    background-color: #eeeeee;
+    transition: all 0.4s ease;
+}
+
+.sobre-paragrafo:hover::after {
+    width: 80%;
+}
+
+/* Destaque para o último parágrafo */
+.sobre-paragrafo:last-of-type {
+    font-weight: 600;
+    color: #000000;
+    font-style: italic;
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+    border-radius: 15px;
+    border: 1px solid #eeeeee;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito especial no último parágrafo */
+.sobre-paragrafo:last-of-type:hover {
+    background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    border-color: #dddddd;
+}
+
+/* Destaque de canto no último parágrafo */
+.sobre-paragrafo:last-of-type::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 40px;
+    height: 40px;
+    background-color: #000000;
+    border-radius: 50%;
+    opacity: 0.05;
+    transition: all 0.4s ease;
+}
+
+.sobre-paragrafo:last-of-type:hover::before {
+    transform: scale(1.5);
+    opacity: 0.08;
+}
+
+/* Animações de entrada */
+.sobre-paragrafo {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.sobre-paragrafo:nth-child(2) { animation-delay: 0.1s; }
+.sobre-paragrafo:nth-child(3) { animation-delay: 0.2s; }
+.sobre-paragrafo:nth-child(4) { animation-delay: 0.3s; }
+.sobre-paragrafo:last-of-type { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .sobre-container {
+        width: 95%;
+        margin: 60px auto;
+        padding: 40px 25px;
+        border-radius: 15px;
     }
     
-    
-    .circle1 {
-    top: 10%;
-    left: 5%;
-    animation-duration: 7s;
+    .sobre-container h1 {
+        font-size: 2.2rem;
+        margin-bottom: 40px;
     }
     
-    
-    .circle2 {
-    bottom: 15%;
-    right: 10%;
-    animation-duration: 9s;
+    .sobre-paragrafo {
+        font-size: 1.05rem;
+        padding: 15px 20px;
+        margin-bottom: 25px;
     }
     
-    
-    @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-25px); }
-    100% { transform: translateY(0px); }
+    .sobre-paragrafo:last-of-type {
+        padding: 25px 20px;
+        margin-top: 30px;
     }
+    
+    .sobre-container::before {
+        width: 80px;
+    }
+    
+    .sobre-container:hover::before {
+        width: 120px;
+    }
+    
+    /* Ajuste do efeito hover para mobile */
+    .sobre-paragrafo:hover {
+        transform: translateY(-1px);
+    }
+    
+    .sobre-paragrafo:last-of-type:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@media (max-width: 480px) {
+    .sobre-container {
+        margin: 40px auto;
+        padding: 30px 20px;
+        border-radius: 12px;
+    }
+    
+    .sobre-container h1 {
+        font-size: 1.9rem;
+        margin-bottom: 30px;
+    }
+    
+    .sobre-paragrafo {
+        font-size: 1rem;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    
+    .sobre-paragrafo:last-of-type {
+        padding: 20px 15px;
+        margin-top: 25px;
+    }
+    
+    /* Efeitos mais sutis em mobile */
+    .sobre-container:hover {
+        transform: translateY(-3px);
+    }
+}
 
 /* CADASTRO*🟢/
 /* ------------------------------ */
@@ -1387,168 +1679,386 @@ button:hover {
     }
 }
 
-/* ===========================
-   SEÇÃO DE DESTAQUES - CARROSSEL
-   =========================== */
+/* ======================================
+   CARROSSEL MINIMALISTA PRETO E BRANCO
+   ====================================== */
 
-   .destaques-section {
-    padding: 80px 0 60px;
-    background: #f9f9f9;
+/* CONFIGURAÇÕES GERAIS DO CARROSSEL */
+.destaques-section {
+    padding: 120px 0 80px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .destaques-title {
     text-align: center;
-    font-size: 32px;
-    margin-bottom: 50px;
-    font-weight: 600;
-    color: #333;
+    font-size: 48px;
+    margin-bottom: 80px;
+    font-weight: 300;
+    color: #111;
     position: relative;
+    letter-spacing: -1.5px;
 }
 
-.destaques-title::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
-    background: #000;
-}
 
+/* CONTAINER DO CARROSSEL */
 .carrossel-container {
-    position: relative;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    overflow: hidden;
-    padding: 0 60px;
+    padding: 0 100px;
+    position: relative;
 }
 
 .carrossel-wrapper {
     overflow: hidden;
-    padding: 20px 0;
+    position: relative;
 }
 
 .carrossel-track {
     display: flex;
-    gap: 25px;
-    transition: transform 0.5s ease-in-out;
+    gap: 30px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 20px 5px;
 }
 
+/* ITENS DO CARROSSEL */
 .carrossel-item {
-    flex: 0 0 auto;
-    width: calc(25% - 19px); /* 4 cards por linha considerando o gap */
-    min-width: 250px;
+    flex: 0 0 calc(25% - 22.5px);
+    min-width: 280px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.6s ease-out forwards;
 }
 
-/* Botões de navegação */
+/* Efeito de elevação sutil */
+.carrossel-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+}
+
+.carrossel-item:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* CARDS DOS PRODUTOS */
+.carrossel-item .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    text-align: center;
+}
+
+.carrossel-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    filter: grayscale(20%);
+    transition: filter 0.3s ease;
+}
+
+.carrossel-item:hover img {
+    filter: grayscale(0%);
+}
+
+.produto-nome {
+    font-size: 18px;
+    font-weight: 400;
+    color: #000;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.produto-preco {
+    font-size: 22px;
+    font-weight: 300;
+    color: #000;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+}
+
+/* BOTÃO ADICIONAR AO CARRINHO */
+.btn-comprar {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: #000;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: auto;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-comprar:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+.btn-comprar:active {
+    background: #000;
+    color: white;
+    transform: scale(0.98);
+}
+
+.btn-comprar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-comprar:disabled:active {
+    transform: none;
+    background: transparent;
+    color: #000;
+}
+
+/* BOTÕES DE NAVEGAÇÃO */
 .carrossel-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    border: none;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
-    transition: all 0.3s ease;
+    color: #000;
+    transition: all 0.2s ease;
     z-index: 10;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    user-select: none;
 }
 
-.carrossel-btn:hover {
-    background: rgba(0, 0, 0, 1);
-    transform: translateY(-50%) scale(1.1);
+/* Efeito de pressionar */
+.carrossel-btn:active {
+    transform: translateY(-50%) scale(0.92);
+    background: #000;
+    color: white;
+    border-color: #000;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.carrossel-btn:hover:not(:active) {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
 }
 
 .carrossel-prev {
-    left: 0;
+    left: 20px;
 }
 
 .carrossel-next {
-    right: 0;
+    right: 20px;
 }
 
-/* Indicadores do carrossel */
+/* Linha decorativa nas setas */
+.carrossel-btn::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 30px;
+    background: #000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.carrossel-btn:active::before {
+    opacity: 0.2;
+}
+
+.carrossel-prev::before {
+    transform: rotate(45deg) translate(10px, -10px);
+}
+
+.carrossel-next::before {
+    transform: rotate(45deg) translate(-10px, 10px);
+}
+
+/* INDICADORES MINIMALISTAS */
 .carrossel-indicators {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-top: 30px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 60px;
+    position: relative;
+    padding: 15px 0;
 }
 
 .carrossel-indicator {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: #ccc;
+    background: rgba(0, 0, 0, 0.15);
     border: none;
     cursor: pointer;
+    position: relative;
     transition: all 0.3s ease;
+    padding: 0;
 }
 
-.carrossel-indicator.active {
-    background: #000;
+
+
+.carrossel-indicator:hover:not(:active) {
+    background: rgba(0, 0, 0, 0.25);
     transform: scale(1.2);
 }
 
-/* Responsividade */
-@media (max-width: 1024px) {
+.carrossel-indicator.active {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.3);
+}
+
+/* Linha conectando as bolinhas */
+.carrossel-indicators::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 40px);
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 0, 0, 0.05) 20%, 
+        rgba(0, 0, 0, 0.05) 80%, 
+        transparent 100%);
+    z-index: -1;
+}
+
+/* ANIMAÇÕES */
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Atrasos para animação em cascata */
+.carrossel-item:nth-child(1) { animation-delay: 0.1s; }
+.carrossel-item:nth-child(2) { animation-delay: 0.2s; }
+.carrossel-item:nth-child(3) { animation-delay: 0.3s; }
+.carrossel-item:nth-child(4) { animation-delay: 0.4s; }
+.carrossel-item:nth-child(5) { animation-delay: 0.5s; }
+.carrossel-item:nth-child(6) { animation-delay: 0.6s; }
+
+/* RESPONSIVIDADE */
+@media (max-width: 1200px) {
     .carrossel-item {
-        width: calc(33.333% - 17px); /* 3 cards por linha */
+        flex: 0 0 calc(33.333% - 20px);
+    }
+    
+    .carrossel-container {
+        padding: 0 80px;
+    }
+}
+
+@media (max-width: 992px) {
+    .carrossel-container {
+        padding: 0 60px;
+    }
+    
+    .carrossel-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .destaques-title {
+        font-size: 40px;
     }
 }
 
 @media (max-width: 768px) {
     .carrossel-container {
-        padding: 0 50px;
+        padding: 0 40px;
     }
     
     .carrossel-item {
-        width: calc(50% - 13px); /* 2 cards por linha */
+        flex: 0 0 calc(50% - 15px);
+    }
+    
+    .carrossel-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+    
+    .destaques-title {
+        font-size: 36px;
+        margin-bottom: 60px;
+    }
+    
+    .destaques-section {
+        padding: 80px 0 60px;
+    }
+    
+    .carrossel-indicators {
+        margin-top: 40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .carrossel-container {
+        padding: 0 30px;
+    }
+    
+    .carrossel-item {
+        flex: 0 0 100%;
     }
     
     .carrossel-btn {
         width: 40px;
         height: 40px;
-        font-size: 16px;
+        font-size: 14px;
     }
     
     .destaques-title {
-        font-size: 28px;
+        font-size: 32px;
     }
 }
 
-@media (max-width: 480px) {
-    .carrossel-container {
-        padding: 0 40px;
-    }
-    
-    .carrossel-item {
-        width: 100%; /* 1 card por linha */
-    }
-    
-    .destaques-section {
-        padding: 60px 0 40px;
-    }
+/* ESTADOS ESPECIAIS */
+.carrossel-btn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
 }
 
-/* Efeito de fade para transições suaves */
-.carrossel-track {
-    will-change: transform;
+.carrossel-btn.disabled:active {
+    transform: translateY(-50%) scale(0.9);
+    background: white;
+    color: #000;
 }
 
-/* Loading state */
-.carrossel-loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
 🟡🟡🟡/* Mensagens Flash */🟡🟡🟡
 .flash-messages {
     margin-bottom: 20px;
@@ -4503,3 +5013,4 @@ button:hover {
 .frete-selecionado span {
     font-size: 14px;
 }
+

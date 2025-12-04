@@ -6,14 +6,14 @@
     <title>Novo Produto - MAGDA CREW</title>
     
     <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 <body class="novo-produto-body">
     <div class="np-wrapper">
         {% include 'layouts/navbar.html' %}
         <h1 class="np-title">Adicionar novo produto</h1>
 
-        <form method="POST" action="/salvar" enctype="multipart/form-data" class="np-card">
+        <form method="POST" action="/admin/salvar" enctype="multipart/form-data" class="np-card">
 
             <div class="np-group">
                 <label>Nome do produto</label>
