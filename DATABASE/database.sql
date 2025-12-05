@@ -76,24 +76,61 @@ CREATE TABLE estoque(
     FOREIGN KEY (produto_id) REFERENCES produtos(id)
 );
 
-CREATE TABLE vendas(
+-- Adicione estas tabelas ao seu banco de dados:
+
+-- Tabela de vendas
+CREATE TABLE IF NOT EXISTS vendas (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id INT,
-    data_venda DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usuario_id INT NOT NULL,
     valor_total DECIMAL(10,2) NOT NULL,
-    forma_pagamento ENUM('PIX','Cartão Débito','Cartão Crédito','Boleto') NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    valor_frete DECIMAL(10,2) NOT NULL,
+    forma_pagamento VARCHAR(50) DEFAULT 'simulacao',
+    frete_tipo VARCHAR(50),
+    cpf_cnpj_nota VARCHAR(20),
+    status VARCHAR(50) DEFAULT 'confirmado',
+    data_venda DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
-CREATE TABLE itens_venda (
+-- Tabela de endereços por venda
+CREATE TABLE IF NOT EXISTS enderecos_venda (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venda_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    tamanho_id INT NOT NULL,
-    cor_id INT NOT NULL,
+    cep VARCHAR(10),
+    logradouro VARCHAR(255),
+    numero VARCHAR(20),
+    complemento VARCHAR(255),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    estado VARCHAR(2),
+    destinatario VARCHAR(255),
+    FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE
+);
+
+-- Tabela de itens da venda
+CREATE TABLE IF NOT EXISTS itens_venda (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    venda_id INT NOT NULL,
+    produto_id INT,
     quantidade INT NOT NULL,
     preco_unitario DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (venda_id) REFERENCES vendas(id),
+    tamanho VARCHAR(50),
+    cor VARCHAR(50),
+    FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id)
+);
+
+-- Se você ainda não tem tabela de carrinho:
+CREATE TABLE IF NOT EXISTS carrinho (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT DEFAULT 1,
+    tamanho_id INT,
+    cor_id INT,
+    data_adicao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY (produto_id) REFERENCES produtos(id),
     FOREIGN KEY (tamanho_id) REFERENCES tamanhos(id),
     FOREIGN KEY (cor_id) REFERENCES cores(id)

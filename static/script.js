@@ -27,6 +27,8 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Inicializar carrinho
     atualizarContador();
+
+    
     
     // Botão de adicionar na página de visualização (mantém funcionalidade)
     const btnAdicionarDetalhes = document.querySelector('.btn-adicionar-carrinho');
@@ -121,16 +123,112 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     
     // Botão "Iniciar compra" no carrinho
+    // Atualize a função que controla o botão "Iniciar Compra"
+document.addEventListener('DOMContentLoaded', function() {
+    // ... código existente ...
+    
+    // Botão "Iniciar compra" no carrinho
     const iniciarCompraBtn = document.getElementById('iniciar-compra');
     if (iniciarCompraBtn) {
-        iniciarCompraBtn.addEventListener('click', function() {
-            if (carrinho.length > 0) {
-                // Aqui você pode redirecionar para a página de checkout
-                alert('Redirecionando para a página de checkout...');
-                // window.location.href = '/checkout';
+        // REMOVA qualquer href que exista no botão
+        iniciarCompraBtn.removeAttribute('href');
+        
+        iniciarCompraBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Verificar se há itens no carrinho
+            const carrinhoLocal = JSON.parse(localStorage.getItem('carrinho')) || [];
+            
+            if (carrinhoLocal.length === 0) {
+                alert('Seu carrinho está vazio! Adicione produtos antes de finalizar a compra.');
+                return;
             }
+            
+            // Sincronizar com o servidor primeiro
+            sincronizarCarrinhoComCheckout();
         });
     }
+});
+
+// Função para sincronizar e redirecionar
+async function sincronizarCarrinhoComCheckout() {
+    try {
+        // Mostrar loading
+        const iniciarCompraBtn = document.getElementById('iniciar-compra');
+        if (iniciarCompraBtn) {
+            iniciarCompraBtn.textContent = 'Processando...';
+            iniciarCompraBtn.disabled = true;
+        }
+        
+        // Sincronizar carrinho
+        await sincronizarCarrinhoCompleto();
+        
+        // Redirecionar para checkout
+        window.location.href = '/checkout';
+        
+    } catch (error) {
+        console.error('Erro ao sincronizar carrinho:', error);
+        alert('Erro ao processar carrinho. Tente novamente.');
+        
+        // Restaurar botão
+        const iniciarCompraBtn = document.getElementById('iniciar-compra');
+        if (iniciarCompraBtn) {
+            iniciarCompraBtn.textContent = 'INICIAR COMPRA';
+            iniciarCompraBtn.disabled = false;
+        }
+    }
+}
+
+// Função melhorada para sincronizar
+async function sincronizarCarrinhoCompleto() {
+    const carrinhoLocal = JSON.parse(localStorage.getItem('carrinho')) || [];
+    
+    if (carrinhoLocal.length === 0) {
+        throw new Error('Carrinho vazio');
+    }
+    
+    try {
+        // Primeiro, limpar carrinho antigo no servidor
+        const clearResponse = await fetch('/api/carrinho/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        // Depois, adicionar cada item
+        for (const item of carrinhoLocal) {
+            const response = await fetch('/api/carrinho/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    produto_id: item.id,
+                    nome: item.nome,
+                    preco: item.preco,
+                    imagem: item.imagem,
+                    tamanho: item.tamanho,
+                    cor: item.cor,
+                    quantidade: item.quantidade
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                console.error('Erro ao adicionar item:', item.nome, data.error);
+                throw new Error(`Erro ao adicionar ${item.nome}`);
+            }
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Erro ao sincronizar:', error);
+        throw error;
+    }
+}
     
     // Atribuir IDs de produto aos cards na página de produtos
     document.querySelectorAll('.card').forEach(card => {

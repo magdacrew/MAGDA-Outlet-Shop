@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -336,7 +337,7 @@ def login():
             cursor = conexao.cursor(dictionary=True)
 
             cursor.execute("""
-                SELECT id, nome_completo, email, senha_hash, is_admin 
+                SELECT id, nome_completo, email, cpf, senha_hash, is_admin 
                 FROM usuarios 
                 WHERE email = %s
             """, (email,))
@@ -350,6 +351,7 @@ def login():
                 session['usuario_id'] = usuario['id']
                 session['usuario_nome'] = usuario['nome_completo']
                 session['usuario_email'] = usuario['email']
+                session['usuario_cpf'] = usuario['cpf']
                 session['is_admin'] = usuario['is_admin']
                 
                 flash(f'Bem-vindo(a) de volta, {usuario["nome_completo"]}!', 'success')
@@ -997,292 +999,6 @@ def toggle_destaque(id):
         conexao.close()
     
     return redirect("/admin/estoque")
-
-@app.route("/admin/gerenciar_clientes")
-@admin_required
-def clientes():   
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT id, nome_completo, email, telefone, cpf, nascimento, 
-                   data_cadastro, is_admin
-            FROM usuarios
-            ORDER BY data_cadastro DESC
-        """)
-        clientes = cursor.fetchall()
-        
-        cursor.close()
-        conexao.close()
-        
-        return render_template("/auth/gerenciar_clientes.html", clientes=clientes)
-    
-    except Exception as e:
-        flash(f"Erro ao carregar clientes: {str(e)}", "error")
-        return redirect("/admin/dashboard")
-
-@app.route("/admin/tornar_admin/<int:usuario_id>")
-@admin_required
-def tornar_admin(usuario_id):
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor()
-        
-        cursor.execute("UPDATE usuarios SET is_admin = TRUE WHERE id = %s", (usuario_id,))
-        conexao.commit()
-        
-        cursor.close()
-        conexao.close()
-        
-        flash("Usuário promovido a administrador com sucesso!", "success")
-        
-    except Exception as e:
-        flash(f"Erro ao promover usuário: {str(e)}", "error")
-    
-    return redirect("/admin/gerenciar_clientes")
-
-@app.route("/admin/remover_admin/<int:usuario_id>")
-@admin_required
-def remover_admin(usuario_id):
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor()
-        
-        cursor.execute("UPDATE usuarios SET is_admin = FALSE WHERE id = %s", (usuario_id,))
-        conexao.commit()
-        
-        cursor.close()
-        conexao.close()
-        
-        flash("Permissões de administrador removidas com sucesso!", "success")
-        
-    except Exception as e:
-        flash(f"Erro ao remover permissões: {str(e)}", "error")
-    
-    return redirect("/admin/gerenciar_clientes")
-
-@app.route("/admin/excluir_usuario/<int:usuario_id>")
-@admin_required
-def excluir_usuario(usuario_id):
-    try:
-        # Não permitir excluir a si mesmo
-        if usuario_id == session.get('usuario_id'):
-            flash("Você não pode excluir sua própria conta!", "error")
-            return redirect("/admin/gerenciar_clientes")
-        
-        conexao = conectar()
-        cursor = conexao.cursor()
-        
-        cursor.execute("DELETE FROM usuarios WHERE id = %s", (usuario_id,))
-        conexao.commit()
-        
-        cursor.close()
-        conexao.close()
-        
-        flash("Usuário excluído com sucesso!", "success")
-        
-    except Exception as e:
-        flash(f"Erro ao excluir usuário: {str(e)}", "error")
-    
-    return redirect("/admin/gerenciar_clientes")
-
-@app.route("/admin/pedidos")
-@admin_required
-def pedidos():
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT v.*, u.nome_completo, u.email
-            FROM vendas v
-            LEFT JOIN usuarios u ON v.usuario_id = u.id
-            ORDER BY v.data_venda DESC
-        """)
-        pedidos = cursor.fetchall()
-        
-        cursor.close()
-        conexao.close()
-        
-        return render_template("admin/pedidos.html", pedidos=pedidos)
-    
-    except Exception as e:
-        flash(f"Erro ao carregar pedidos: {str(e)}", "error")
-        return redirect("/admin/dashboard")
-
-@app.route("/admin/relatorios")
-@admin_required
-def relatorios():
-    return render_template("admin/relatorios.html")
-
-@app.route("/admin/sair")
-def admin_logout():
-    session.clear()
-    flash('Você saiu do painel administrativo.', 'info')
-    return redirect('/')
-
-# ==================== ROTAS DE USUÁRIO COMUM ====================
-
-@app.route("/editar_usuario/<int:usuario_id>", methods=['GET', 'POST'])
-@login_required
-def editar_usuario(usuario_id):
-    # Verificar se o usuário está editando seu próprio perfil
-    if usuario_id != session.get('usuario_id') and not verificar_permissao_admin():
-        flash("Você só pode editar seu próprio perfil.", "error")
-        return redirect('/usuario')
-    
-    if request.method == 'POST':
-        nome_completo = request.form.get('nome_completo', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        telefone = request.form.get('telefone', '').strip()
-        cpf = request.form.get('cpf', '').strip()
-        nascimento = request.form.get('nascimento', '')
-        
-        # Se for admin editando outro usuário, permite mudar is_admin
-        is_admin = request.form.get('is_admin') == 'true' if verificar_permissao_admin() else None
-
-        erros = []
-
-        if not nome_completo:
-            erros.append('O nome completo é obrigatório.')
-        
-        if not email or '@' not in email:
-            erros.append('E-mail inválido.')
-        
-        if not telefone:
-            erros.append('Telefone é obrigatório.')
-        
-        if not cpf or len(cpf) < 11:
-            erros.append('CPF inválido.')
-        
-        if not nascimento:
-            erros.append('Data de nascimento é obrigatória.')
-        else:
-            nascimento_date = datetime.strptime(nascimento, '%Y-%m-%d')
-            idade = (datetime.now() - nascimento_date).days // 365
-            if idade < 18:
-                erros.append('É necessário ter 18 anos ou mais.')
-        
-        if erros:
-            for erro in erros:
-                flash(erro, 'error')
-            return redirect(f'/editar_usuario/{usuario_id}')
-
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor()
-
-            # Verificar se email já existe em outro usuário
-            cursor.execute("SELECT id FROM usuarios WHERE email = %s AND id != %s", (email, usuario_id))
-            if cursor.fetchone():
-                flash('Este e-mail já está em uso por outro usuário.', 'error')
-                return redirect(f'/editar_usuario/{usuario_id}')
-
-            # Verificar se CPF já existe em outro usuário
-            cursor.execute("SELECT id FROM usuarios WHERE cpf = %s AND id != %s", (cpf, usuario_id))
-            if cursor.fetchone():
-                flash('Este CPF já está em uso por outro usuário.', 'error')
-                return redirect(f'/editar_usuario/{usuario_id}')
-
-            # Atualizar usuário
-            if is_admin is not None and verificar_permissao_admin():
-                sql_update = """
-                    UPDATE usuarios 
-                    SET nome_completo = %s, email = %s, telefone = %s, 
-                        cpf = %s, nascimento = %s, is_admin = %s
-                    WHERE id = %s
-                """
-                cursor.execute(sql_update, (nome_completo, email, telefone, cpf, nascimento, is_admin, usuario_id))
-            else:
-                sql_update = """
-                    UPDATE usuarios 
-                    SET nome_completo = %s, email = %s, telefone = %s, 
-                        cpf = %s, nascimento = %s
-                    WHERE id = %s
-                """
-                cursor.execute(sql_update, (nome_completo, email, telefone, cpf, nascimento, usuario_id))
-            
-            conexao.commit()
-            cursor.close()
-            conexao.close()
-
-            # Atualizar sessão se for o próprio usuário
-            if usuario_id == session.get('usuario_id'):
-                session['usuario_nome'] = nome_completo
-                session['usuario_email'] = email
-                if is_admin is not None:
-                    session['is_admin'] = is_admin
-
-            flash('Informações atualizadas com sucesso!', 'success')
-            
-            # Redirecionar conforme o tipo de usuário
-            if verificar_permissao_admin() and usuario_id != session.get('usuario_id'):
-                return redirect('/admin/gerenciar_clientes')
-            else:
-                return redirect('/usuario')
-
-        except mysql.connector.Error as err:
-            flash(f'Erro no banco de dados: {err}', 'error')
-            return redirect(f'/editar_usuario/{usuario_id}')
-        except Exception as e:
-            flash(f'Erro inesperado: {str(e)}', 'error')
-            return redirect(f'/editar_usuario/{usuario_id}')
-    
-    elif request.method == 'GET':
-        try:
-            conexao = conectar()
-            cursor = conexao.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
-            usuario = cursor.fetchone()
-            
-            cursor.close()
-            conexao.close()
-
-            if not usuario:
-                flash("Usuário não encontrado.", "error")
-                return redirect('/usuario' if not verificar_permissao_admin() else '/admin/gerenciar_clientes')
-            
-            # Verificar permissão para editar
-            pode_editar = (usuario_id == session.get('usuario_id')) or verificar_permissao_admin()
-            if not pode_editar:
-                flash("Você não tem permissão para editar este perfil.", "error")
-                return redirect('/')
-            
-            return render_template("auth/editar_usuario.html", usuario=usuario, is_admin=verificar_permissao_admin())
-        
-        except Exception as e:
-            flash(f"Erro ao carregar usuário: {str(e)}", "error")
-            return redirect('/usuario')
-    
-    return render_template("auth/editar_usuario.html")
-
-# ==================== MIDDLEWARE PARA PROTEGER ROTAS ====================
-
-@app.before_request
-def proteger_rotas_admin():
-    # Lista de rotas que só admin pode acessar
-    rotas_protegidas = [
-        '/admin/', '/dashboard', '/estoque', '/novo_produto', '/salvar',
-        '/editar_produto/', '/atualizar/', '/desativar_produto/', '/reativar_produto/',
-        '/produto/', '/destaque', '/gerenciar_clientes', '/tornar_admin/',
-        '/remover_admin/', '/excluir_usuario/', '/pedidos', '/relatorios'
-    ]
-    
-    # Verificar se a rota atual é protegida
-    rota_atual = request.path
-    precisa_proteger = any(rota_atual.startswith(rota) for rota in rotas_protegidas)
-    
-    if precisa_proteger:
-        # Verificar se o usuário está autenticado e é admin
-        if 'usuario_id' not in session:
-            flash("Acesso restrito. Faça login como administrador.", "error")
-            return redirect('/login')
-        
-        if not session.get('is_admin'):
-            flash("Acesso restrito. Permissões insuficientes.", "error")
-            return redirect('/')
-
 # ==================== CARRINHO E CHECKOUT ====================
 
 @app.route("/api/carrinho", methods=['GET'])
@@ -1307,10 +1023,372 @@ def add_to_carrinho():
         "produto": data
     })
 
+@app.route("/api/carrinho/clear", methods=['POST'])
+@login_required
+def api_carrinho_clear():
+    """Limpa o carrinho do usuário"""
+    usuario_id = session.get('usuario_id')
+    
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor()
+        
+        cursor.execute("DELETE FROM carrinho WHERE usuario_id = %s", (usuario_id,))
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({"success": True, "message": "Carrinho limpo"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route("/carrinho")
+@login_required
+def carrinho():
+    """Página do carrinho"""
+    usuario_id = session.get('usuario_id')
+    
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    try:
+        cursor.execute("""
+            SELECT c.id, c.produto_id, c.quantidade,
+                   p.nome, p.preco, p.imagem,
+                   t.nome as tamanho_nome, cor.nome as cor_nome,
+                   (p.preco * c.quantidade) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cor ON c.cor_id = cor.id
+            WHERE c.usuario_id = %s
+        """, (usuario_id,))
+        
+        itens = cursor.fetchall()
+        
+        # Calcular totais
+        subtotal = sum(float(item['subtotal']) for item in itens) if itens else 0
+        
+    except Exception as e:
+        flash(f'Erro ao carregar carrinho: {str(e)}', 'error')
+        itens = []
+        subtotal = 0
+    
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    return render_template("pages/carrinho.html", 
+                         itens=itens, 
+                         subtotal=subtotal,
+                         total=subtotal + 15.90)  # Frete padrão
+
 @app.route("/checkout")
 @login_required
 def checkout():
-    return render_template("/pages/checkout.html")
+    usuario_id = session.get('usuario_id')
+    
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    try:
+        # 1. Buscar usuário
+        cursor.execute("""
+            SELECT u.id, u.nome_completo, u.email, u.telefone, u.cpf
+            FROM usuarios u
+            WHERE u.id = %s
+        """, (usuario_id,))
+        
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            flash('Usuário não encontrado', 'error')
+            return redirect(url_for('home'))
+        
+        # 2. Buscar itens do carrinho do BANCO DE DADOS
+        cursor.execute("""
+            SELECT c.id, c.produto_id, c.quantidade,
+                   p.nome, p.preco, p.imagem,
+                   t.nome as tamanho_nome, cor.nome as cor_nome,
+                   (p.preco * c.quantidade) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cor ON c.cor_id = cor.id
+            WHERE c.usuario_id = %s
+        """, (usuario_id,))
+        
+        itens_carrinho = cursor.fetchall()
+        
+        # VERIFICAÇÃO IMPORTANTE: Se o carrinho está vazio
+        if not itens_carrinho:
+            flash('Seu carrinho está vazio! Adicione produtos antes de finalizar a compra.', 'warning')
+            return redirect(url_for('carrinho'))  # ou redirecione para a página de produtos
+        
+        # 3. Calcular totais
+        subtotal = sum(float(item['subtotal']) for item in itens_carrinho)
+        total = subtotal + 15.90  # Frete padrão
+        
+        dados_checkout = {
+            'usuario': usuario,
+            'itens': itens_carrinho,
+            'subtotal': subtotal,
+            'total': total,
+            'quantidade_itens': len(itens_carrinho)
+        }
+        
+    except Exception as e:
+        flash(f'Erro ao processar checkout: {str(e)}', 'error')
+        return redirect(url_for('home'))
+    
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    return render_template("pages/checkout_dados.html", **dados_checkout)
+# ==================== ROTAS DE CHECKOUT (CONTINUAÇÃO) ====================
+
+@app.route("/checkout/salvar_dados", methods=['POST'])
+@login_required
+def checkout_salvar_dados():
+    """Salva os dados do checkout e redireciona para o resumo"""
+    usuario_id = session.get('usuario_id')
+    
+    try:
+        # Coletar dados do formulário
+        dados_entrega = {
+            'nome': request.form.get('nome'),
+            'sobrenome': request.form.get('sobrenome'),
+            'telefone': request.form.get('telefone') or session.get('usuario_telefone', ''),
+            'cep': request.form.get('cep'),
+            'rua': request.form.get('rua'),
+            'numero': request.form.get('numero'),
+            'complemento': request.form.get('complemento'),
+            'bairro': request.form.get('bairro'),
+            'cidade': request.form.get('cidade'),
+            'estado': request.form.get('estado'),
+            'frete': request.form.get('frete', 'padrao'),
+            'cpf_cnpj': request.form.get('cpf_cnpj'),
+            'usuario_id': usuario_id
+        }
+        
+        # Calcular valor do frete
+        frete_valores = {
+            'padrao': 15.90,
+            'expressa': 29.90,
+            'economica': 9.90
+        }
+        dados_entrega['valor_frete'] = frete_valores.get(dados_entrega['frete'], 15.90)
+        
+        # Validar dados obrigatórios
+        campos_obrigatorios = ['nome', 'sobrenome', 'cep', 'rua', 'numero', 'bairro', 'cidade', 'estado', 'cpf_cnpj']
+        for campo in campos_obrigatorios:
+            if not dados_entrega.get(campo):
+                flash(f'O campo {campo.replace("_", " ").title()} é obrigatório', 'error')
+                return redirect(url_for('checkout'))
+        
+        # Buscar itens do carrinho (simulação - você precisa implementar a lógica do carrinho)
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Exemplo: buscar itens do carrinho do usuário
+        # Adapte conforme sua estrutura de carrinho
+        cursor.execute("""
+            SELECT c.*, p.nome, p.preco, p.imagem,
+                   t.nome as tamanho_nome, cor.nome as cor_nome,
+                   (p.preco * c.quantidade) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cor ON c.cor_id = cor.id
+            WHERE c.usuario_id = %s
+        """, (usuario_id,))
+        
+        itens_carrinho = cursor.fetchall()
+        cursor.close()
+        conexao.close()
+        
+        if not itens_carrinho:
+            # Se não houver carrinho, usar dados de exemplo para demonstração
+            itens_carrinho = [{
+                'nome': 'Produto de Exemplo',
+                'preco': 99.90,
+                'imagem': None,
+                'tamanho_nome': 'M',
+                'cor_nome': 'Preto',
+                'quantidade': 1,
+                'subtotal': 99.90
+            }]
+        
+        # Calcular totais
+        subtotal = sum(float(item['subtotal']) for item in itens_carrinho)
+        total = subtotal + dados_entrega['valor_frete']
+        
+        # Armazenar dados na sessão temporariamente
+        session['checkout_dados'] = dados_entrega
+        session['checkout_itens'] = itens_carrinho
+        session['checkout_totais'] = {
+            'subtotal': subtotal,
+            'frete': dados_entrega['valor_frete'],
+            'total': total
+        }
+        
+        return render_template("pages/checkout_resumo.html",
+                             dados_entrega=dados_entrega,
+                             dados_entrega_json=json.dumps(dados_entrega),
+                             itens=itens_carrinho,
+                             subtotal=subtotal,
+                             total=total)
+        
+    except Exception as e:
+        flash(f'Erro ao processar dados: {str(e)}', 'error')
+        return redirect(url_for('checkout'))
+
+@app.route("/checkout/finalizar", methods=['POST'])
+@login_required
+def checkout_finalizar():
+    """Finaliza o pedido e registra a venda"""
+    usuario_id = session.get('usuario_id')
+    
+    try:
+        # Recuperar dados da sessão
+        dados_entrega = session.get('checkout_dados')
+        itens_carrinho = session.get('checkout_itens')
+        totais = session.get('checkout_totais')
+        
+        if not dados_entrega or not itens_carrinho:
+            flash('Dados do pedido não encontrados', 'error')
+            return redirect(url_for('checkout'))
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+        
+        try:
+            # 1. Registrar a venda
+            cursor.execute("""
+                INSERT INTO vendas 
+                (usuario_id, valor_total, subtotal, valor_frete, forma_pagamento, 
+                 frete_tipo, cpf_cnpj_nota, status, data_venda)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            """, (
+                usuario_id,
+                totais['total'],
+                totais['subtotal'],
+                totais['frete'],
+                'simulacao',  # Como é demonstração
+                dados_entrega['frete'],
+                dados_entrega['cpf_cnpj'],
+                'confirmado'
+            ))
+            
+            venda_id = cursor.lastrowid
+            
+            # 2. Registrar endereço da venda
+            cursor.execute("""
+                INSERT INTO enderecos_venda 
+                (venda_id, cep, logradouro, numero, complemento, 
+                 bairro, cidade, estado, destinatario)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                venda_id,
+                dados_entrega['cep'],
+                dados_entrega['rua'],
+                dados_entrega['numero'],
+                dados_entrega.get('complemento'),
+                dados_entrega['bairro'],
+                dados_entrega['cidade'],
+                dados_entrega['estado'],
+                f"{dados_entrega['nome']} {dados_entrega['sobrenome']}"
+            ))
+            
+            # 3. Registrar itens da venda
+            for item in itens_carrinho:
+                cursor.execute("""
+                    INSERT INTO itens_venda 
+                    (venda_id, produto_id, quantidade, preco_unitario, tamanho, cor)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (
+                    venda_id,
+                    item.get('produto_id', 0),  # Use o ID real do seu carrinho
+                    item['quantidade'],
+                    item['preco'],
+                    item.get('tamanho_nome'),
+                    item.get('cor_nome')
+                ))
+                
+                # 4. Atualizar estoque (opcional para demonstração)
+                # Descomente se quiser atualizar estoque
+            
+                cursor.execute("""
+                    UPDATE estoque e
+                    JOIN produtos p ON e.produto_id = p.id
+                    SET e.quantidade = e.quantidade - %s
+                    WHERE e.produto_id = %s 
+                    AND (e.tamanho_id = COALESCE((SELECT id FROM tamanhos WHERE nome = %s), e.tamanho_id))
+                    AND (e.cor_id = COALESCE((SELECT id FROM cores WHERE nome = %s), e.cor_id))
+                """, (
+                    item['quantidade'],
+                    item.get('produto_id'),
+                    item.get('tamanho_nome'),
+                    item.get('cor_nome')
+                ))
+            
+            # 5. Limpar carrinho do usuário (se existir)
+            cursor.execute("DELETE FROM carrinho WHERE usuario_id = %s", (usuario_id,))
+            
+            conexao.commit()
+            
+            # 6. Preparar dados para a página de sucesso
+            pedido = {
+                'id': venda_id,
+                'data_venda': datetime.now(),
+                'valor_total': totais['total'],
+                'subtotal': totais['subtotal'],
+                'valor_frete': totais['frete'],
+                'frete_tipo': dados_entrega['frete'],
+                'cpf_cnpj': dados_entrega['cpf_cnpj'],
+                'quantidade_itens': len(itens_carrinho),
+                'usuario_id': usuario_id,
+                'endereco': {
+                    'rua': dados_entrega['rua'],
+                    'numero': dados_entrega['numero'],
+                    'complemento': dados_entrega.get('complemento'),
+                    'bairro': dados_entrega['bairro'],
+                    'cidade': dados_entrega['cidade'],
+                    'estado': dados_entrega['estado']
+                }
+            }
+            
+            # 7. Limpar dados da sessão
+            session.pop('checkout_dados', None)
+            session.pop('checkout_itens', None)
+            session.pop('checkout_totais', None)
+            
+            cursor.close()
+            conexao.close()
+            
+            # 8. Mostrar página de sucesso
+            return render_template("pages/checkout_sucesso.html", pedido=pedido)
+            
+        except Exception as e:
+            conexao.rollback()
+            raise e
+            
+    except Exception as e:
+        flash(f'Erro ao finalizar pedido: {str(e)}', 'error')
+        return redirect(url_for('checkout'))
+
+@app.route("/checkout/cancelar")
+@login_required
+def checkout_cancelar():
+    """Cancela o processo de checkout"""
+    session.pop('checkout_dados', None)
+    session.pop('checkout_itens', None)
+    session.pop('checkout_totais', None)
+    flash('Compra cancelada', 'info')
+    return redirect(url_for('carrinho'))
 
 @app.route("/api/produto/<int:produto_id>/estoque")
 def get_estoque_produto(produto_id):
@@ -1347,6 +1425,41 @@ def get_estoque_produto(produto_id):
 # ==================== ROTA PARA CRIAR ADMIN MANUALMENTE ====================
 
 @app.route("/criar-admin", methods=['GET', 'POST'])
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        print(f"[DEBUG] Verificando admin... Sessão: {dict(session)}")
+        
+        # Se não estiver logado
+        if 'usuario_id' not in session:
+            print("[DEBUG] Não está logado - redirecionando para dashboard")
+            flash('Faça login para acessar.', 'error')
+            return redirect('/dashboardmagda')
+        
+        # Verificar se é admin no banco
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor(dictionary=True)
+            cursor.execute("SELECT is_admin FROM usuarios WHERE id = %s", (session['usuario_id'],))
+            usuario = cursor.fetchone()
+            cursor.close()
+            conexao.close()
+            
+            if usuario and usuario['is_admin']:
+                print(f"[DEBUG] É admin! ID: {session['usuario_id']}")
+                return f(*args, **kwargs)
+            else:
+                print(f"[DEBUG] NÃO é admin! ID: {session['usuario_id']}")
+                flash('Acesso restrito a administradores.', 'error')
+                return redirect('/dashboardmagda')
+                
+        except Exception as e:
+            print(f"[DEBUG] Erro ao verificar admin: {str(e)}")
+            flash('Erro ao verificar permissões.', 'error')
+            return redirect('/dashboardmagda')
+    
+    return decorated_function
+
 def criar_admin():
     # Esta rota só deve estar ativa durante desenvolvimento
     # Em produção, remova ou proteja com uma chave especial
@@ -1464,7 +1577,7 @@ def redirecionar_rotas_antigas():
         '/estoque': '/admin/estoque',
         '/novo_produto': '/admin/novo_produto',
         '/salvar': '/admin/salvar',
-        '/gerenciar_clientes': '/admin/gerenciar_clientes',
+        '/gerenciar_usuarios': '/admin/gerenciar_usuarios',
     }
     
     if request.path in rotas_redirecionamento:
@@ -1525,11 +1638,187 @@ def formatar_data(data):
 def formatar_moeda(valor):
     return f"R$ {float(valor):.2f}".replace('.', ',')
 
+@app.route("/auth/gerenciar_usuarios", methods=['GET'])
+@admin_required
+def gerenciar_usuarios():
+    """Página principal de gerenciamento de usuários"""
+    try:
+        print("\n" + "="*80)
+        print("INICIANDO gerenciar_usuarios")
+        print(f"Sessão: {dict(session)}")
+        
+        # 1. Teste se está passando pelo decorator
+        print("Passou pelo @admin_required")
+        
+        # 2. Teste de conexão SIMPLES
+        print("Testando conexão com banco...")
+        conexao = conectar()
+        if conexao:
+            print("✅ Conexão com banco OK")
+            cursor = conexao.cursor(dictionary=True)
+            
+            # Teste SIMPLES primeiro
+            cursor.execute("SELECT 1 as test")
+            test = cursor.fetchone()
+            print(f"✅ Teste SQL: {test}")
+            
+            # Contar usuários
+            cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+            total = cursor.fetchone()['total']
+            print(f"✅ Total de usuários no banco: {total}")
+            
+            # Buscar apenas 5 usuários para teste
+            cursor.execute("""
+                SELECT id, nome_completo, email, is_admin, ativo 
+                FROM usuarios 
+                LIMIT 5
+            """)
+            usuarios = cursor.fetchall()
+            print(f"✅ Primeiros {len(usuarios)} usuários carregados")
+            
+            cursor.close()
+            conexao.close()
+            
+            # 3. Teste de template
+            print("Testando renderização do template...")
+            return render_template(
+                "auth/gerenciar_usuarios.html", 
+                usuarios=usuarios,
+                titulo="Gerenciar Usuários"
+            )
+        else:
+            print("❌ Falha na conexão com banco")
+            flash("Erro de conexão com o banco", "error")
+            return redirect(url_for('dashboardmagda'))
+            
+    except Exception as e:
+        print(f"\n❌ ERRO CRÍTICO: {str(e)}")
+        import traceback
+        print("Traceback completo:")
+        traceback.print_exc()
+        print("="*80)
+        
+        flash(f"Erro interno: {str(e)}", "error")
+        return redirect(url_for('dashboardmagda'))
+
+        @app.route("/verificar_template")
+        def verificar_template():
+            import os
+            template_path = "templates/auth/gerenciar_usuarios.html"
+    
+        return jsonify({
+        "template_path": template_path,
+        "existe": os.path.exists(template_path),
+        "caminho_absoluto": os.path.abspath(template_path),
+        "diretorio_templates": os.path.abspath("templates")
+    })
+
+# Teste a query isoladamente
+@app.route("/teste_query")
+def teste_query():
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Teste cada parte da query
+        print("Testando query básica...")
+        cursor.execute("SELECT * FROM usuarios LIMIT 3")
+        usuarios = cursor.fetchall()
+        
+        print("Testando query com LEFT JOIN...")
+        cursor.execute("""
+            SELECT u.id, u.nome_completo, COUNT(v.id) as total_vendas
+            FROM usuarios u
+            LEFT JOIN vendas v ON u.id = v.usuario_id
+            GROUP BY u.id
+            LIMIT 3
+        """)
+        usuarios_compras = cursor.fetchall()
+        
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({
+            "query_basica": usuarios,
+            "query_compras": usuarios_compras
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/carrinho/add", methods=['POST'])
+@login_required
+def api_carrinho_add():
+    """Adiciona item ao carrinho no servidor"""
+    usuario_id = session.get('usuario_id')
+    
+    try:
+        data = request.get_json()
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+        
+        # Buscar IDs de tamanho e cor pelos nomes
+        tamanho_id = None
+        cor_id = None
+        
+        if data.get('tamanho'):
+            cursor.execute("SELECT id FROM tamanhos WHERE nome = %s", (data['tamanho'],))
+            tamanho_result = cursor.fetchone()
+            if tamanho_result:
+                tamanho_id = tamanho_result[0]
+        
+        if data.get('cor'):
+            cursor.execute("SELECT id FROM cores WHERE nome = %s", (data['cor'],))
+            cor_result = cursor.fetchone()
+            if cor_result:
+                cor_id = cor_result[0]
+        
+        # Adicionar ao carrinho
+        cursor.execute("""
+            INSERT INTO carrinho (usuario_id, produto_id, quantidade, tamanho_id, cor_id)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE quantidade = quantidade + VALUES(quantidade)
+        """, (usuario_id, data.get('produto_id'), 1, tamanho_id, cor_id))
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({"success": True, "message": "Item adicionado ao carrinho"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/carrinho")
+@login_required
+def api_carrinho_get():
+    """Busca itens do carrinho do usuário"""
+    usuario_id = session.get('usuario_id')
+    
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT c.*, p.nome, p.preco, p.imagem,
+                   t.nome as tamanho_nome, cor.nome as cor_nome,
+                   (p.preco * c.quantidade) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cor ON c.cor_id = cor.id
+            WHERE c.usuario_id = %s
+        """, (usuario_id,))
+        
+        itens = cursor.fetchall()
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({"success": True, "itens": itens})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
-
-# http://localhost:5001/admin/login PARA ACESSAR O PAINEL ADMIN 
-
-# http://localhost:5001/criar-admin PARA CRIAR UMA CONTA ADMIN PRIMEIRO CRIE UMA CONTA NORMAL E DEPOIS ACESSE ESSA ROTA
-
-# ADMIN_MAGDA_2025

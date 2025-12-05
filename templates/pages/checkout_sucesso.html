@@ -1,0 +1,252 @@
+<!-- templates/pages/checkout_sucesso.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado | MAGDA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .sucesso-container {
+            max-width: 800px;
+            margin: 160px auto 80px;
+            padding: 60px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .sucesso-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            color: #10b981;
+        }
+        
+        .sucesso-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #000;
+        }
+        
+        .sucesso-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .pedido-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: left;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .info-value {
+            color: #666;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .info-value {
+            color: #666;
+        }
+        
+        .pedido-numero {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000;
+            margin: 10px 0;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            justify-content: center;
+        }
+        
+        .btn-voltar {
+            background: #000;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-voltar:hover {
+            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-pedidos {
+            background: white;
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 2px solid #000;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-pedidos:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .detalhes-venda {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            text-align: left;
+        }
+        
+        .detalhes-venda h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .detalhes-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .sucesso-container {
+                padding: 30px 20px;
+                margin: 120px auto 40px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .pedido-info {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'layouts/navbar.html' %}
+
+    <div class="sucesso-container">
+        <div class="sucesso-icon">✅</div>
+        
+        <h1 class="sucesso-title">Pedido Confirmado!</h1>
+        
+        <p class="sucesso-subtitle">
+            Seu pedido foi registrado com sucesso. Abaixo estão os detalhes da sua compra.
+        </p>
+        
+        <div class="pedido-info">
+            <div class="info-item">
+                <span class="info-label">Número do Pedido:</span>
+                <span class="info-value pedido-numero">#{{ pedido.id }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Data da Compra:</span>
+                <span class="info-value">{{ pedido.data_venda.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Valor Total:</span>
+                <span class="info-value">R$ {{ "%.2f"|format(pedido.valor_total) }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value" style="color: #10b981; font-weight: 600;">
+                    ✅ Confirmado
+                </span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">Forma de Envio:</span>
+                <span class="info-value">
+                    {% if pedido.frete_tipo == 'expressa' %}
+                        Entrega Expressa (2-3 dias úteis)
+                    {% elif pedido.frete_tipo == 'economica' %}
+                        Entrega Econômica (10-15 dias úteis)
+                    {% else %}
+                        Entrega Padrão (5-8 dias úteis)
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Detalhes para o relatório -->
+        <div class="detalhes-venda">
+            <h3>📋 Dados para Relatório de Venda:</h3>
+            
+            <div class="detalhes-item">
+                <strong>Usuário ID:</strong> {{ pedido.usuario_id }}
+            </div>
+            <div class="detalhes-item">
+                <strong>Itens Vendidos:</strong> {{ pedido.quantidade_itens }} produto(s)
+            </div>
+            <div class="detalhes-item">
+                <strong>Subtotal:</strong> R$ {{ "%.2f"|format(pedido.subtotal) }}
+            </div>
+            <div class="detalhes-item">
+                <strong>Frete:</strong> R$ {{ "%.2f"|format(pedido.valor_frete) }}
+            </div>
+            <div class="detalhes-item">
+                <strong>CPF/CNPJ Nota:</strong> {{ pedido.cpf_cnpj }}
+            </div>
+            <div class="detalhes-item">
+                <strong>Endereço de Entrega:</strong> 
+                {{ pedido.endereco.rua }}, {{ pedido.endereco.numero }} - 
+                {{ pedido.endereco.bairro }}, {{ pedido.endereco.cidade }}/{{ pedido.endereco.estado }}
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <a href="{{ url_for('home') }}" class="btn-voltar">
+                ← Voltar às Compras
+            </a>
+            <a href="{{ url_for('usuario') }}" class="btn-pedidos">
+                Meus Pedidos
+            </a>
+        </div>
+    </div>
+
+    {% include 'layouts/footer.html' %}
+</body>
+</html>

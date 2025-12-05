@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Gerenciar Usuários</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .success { background: #d4edda; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Teste - Gerenciar Usuários</h1>
+    
+    <div class="success">
+        <strong>✅ Funcionando!</strong> Esta é uma versão simplificada para teste.
+    </div>
+    
+    <p>Total de usuários: {{ usuarios|length }}</p>
+    
+    {% if usuarios %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Admin</th>
+                <th>Ativo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.nome_completo }}</td>
+                <td>{{ usuario.email }}</td>
+                <td>{{ 'Sim' if usuario.is_admin else 'Não' }}</td>
+                <td>{{ 'Sim' if usuario.ativo else 'Não' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Nenhum usuário encontrado.</p>
+    {% endif %}
+    
+    <hr>
+    <p><a href="/dashboardmagda">Voltar para Dashboard</a></p>
+    <p><strong>Debug:</strong> Template carregado com sucesso!</p>
+</body>
+</html>
