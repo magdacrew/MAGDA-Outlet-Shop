@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Clientes • MAGDA</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="icon" href="{{ url_for('static', filename='images/simple_magda_logo.png') }}" type="image/png">
+</head>
+
+<body class="pagina-visualizar-clientes">
+    
+    {% include 'layouts/navbar.html' %}
+
+    <!-- MENSAGEM COM EFEITO -->
+    <div id="msg-status" class="msg-status"></div>
+
+    <div class="container">
+
+        <h1 class="titulo-pagina">Clientes Cadastrados</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome Completo</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>CPF</th>
+                    <th>Nascimento</th>
+                    <th>Cadastrado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for c in clientes %}
+                <tr>
+                    <td>{{ c.id }}</td>
+                    <td>{{ c.nome_completo }}</td>
+                    <td>{{ c.email }}</td>
+                    <td>{{ c.telefone }}</td>
+                    <td>{{ c.cpf }}</td>
+                    <td>{{ c.nascimento }}</td>
+                    <td>{{ c.data_cadastro }}</td>
+
+                    <td>
+                        <a class="btn editar" href="/admin/editar_cliente/{{ c.id }}">Editar</a>
+                    
+                        {% if c.ativo == 1 %}
+                        <!-- Cliente ativo → DESATIVAR -->
+                        <a class="btn-status-magda desativar-magda"
+                           href="/admin/desativar_cliente/{{ c.id }}"
+                           onclick="mostrarMsg('Cliente desativado com sucesso!', 'erro')">
+                           Desativar
+                        </a>
+                    
+                        {% else %}
+                        <!-- Cliente inativo → REATIVAR -->
+                        <a class="btn-status-magda reativar-magda"
+                           href="/admin/reativar_cliente/{{ c.id }}"
+                           onclick="mostrarMsg('Cliente reativado com sucesso!', 'ok')">
+                           Reativar
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+    <div id="status-popup" class="status-popup"></div>
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+</body>
+</html>

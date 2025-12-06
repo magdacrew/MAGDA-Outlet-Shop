@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ produto.nome }} - MAGDA CREW</title>
 
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 
 <body class="produto-detalhes-page">
@@ -32,7 +32,6 @@
             <div class="produto-preco">
                 R$ {{ "%.2f"|format(produto.preco) }}
                 {% if produto.preco_original %}
-                <span class="produto-preco-original">R$ {{ "%.2f"|format(produto.preco_original) }}</span>
                 {% endif %}
             </div>
             
@@ -40,27 +39,21 @@
                 <p>{{ produto.descricao }}</p>
             </div>
             
-            <div class="produto-opcoes">
+            <form class="produto-opcoes" id="form-produto">
                 <div class="opcao-grupo">
                     <label for="tamanho">Tamanho:</label>
-                    <select id="tamanho" name="tamanho">
-                        <option value="">Selecione o tamanho</option>
-                        <!-- Opções de tamanho seriam carregadas dinamicamente -->
-                        <option value="P">P</option>
-                        <option value="M">M</option>
-                        <option value="G">G</option>
-                        <option value="GG">GG</option>
+                    <select name="tamanho_id" id="tamanho" required>
+                        <option disabled selected value="">Selecione...</option>
+                        {% for tamanho in tamanhos %}
+                        <option value="{{ tamanho.id }}">{{ tamanho.nome }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="opcao-grupo">
                     <label for="cor">Cor:</label>
-                    <select id="cor" name="cor">
-                        <option value="">Selecione a cor</option>
-                        <!-- Opções de cor seriam carregadas dinamicamente -->
-                        <option value="preto">Preto</option>
-                        <option value="branco">Branco</option>
-                        <option value="cinza">Cinza</option>
+                    <select name="cor_id" id="cor" required>
+                        <option disabled selected value="">Selecione...</option>
                     </select>
                 </div>
                 
@@ -68,61 +61,104 @@
                     <label for="quantidade">Quantidade:</label>
                     <div class="quantidade-selector">
                         <button type="button" class="quantidade-btn" id="diminuir">-</button>
-                        <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
+                        <input type="number" id="quantidade" name="quantidade" value="1" min="1">
                         <button type="button" class="quantidade-btn" id="aumentar">+</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="produto-acoes">
-                <button class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
-                <button class="btn-comprar-agora">COMPRAR AGORA</button>
-            </div>
-            
-            <div class="produto-detalhes-adicionais">
-                <div class="detalhe-item">
-                    <h3>Descrição Detalhada</h3>
-                    <p>{{ produto.descricao_detalhada or 'Detalhes adicionais sobre o produto.' }}</p>
-                </div>
                 
-                <div class="detalhe-item">
-                    <h3>Informações de Envio</h3>
-                    <p>Frete grátis para Joinville em compras acima de R$ 599,90. Entrega em até 5 dias úteis.</p>
-                </div>
-                
-                <div class="detalhe-item">
-                    <h3>Formas de Pagamento</h3>
-                    <p>Cartão de crédito (até 3x sem juros), PIX (5% de desconto) e boleto bancário.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Seção de produtos relacionados -->
-    <section class="produtos-relacionados-section">
-        <div class="container">
-            <h2 class="destaques-title">Produtos Relacionados</h2>
-            
-            <div class="produtos-container">
-                {% for produto_relacionado in produtos_relacionados %}
-                <div class="card">
-                    <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
-                         alt="{{ produto_relacionado.nome }}">
-                    <div class="produto-nome">{{ produto_relacionado.nome }}</div>
-                    <div class="produto-preco">
-                        R$ {{ "%.2f"|format(produto_relacionado.preco) }}
+                    <!-- No formulário, mude o botão -->
+                    <div class="produto-acoes">
+                        <button type="button" class="btn-adicionar-carrinho" 
+                                data-produto-id="{{ produto.id }}">
+                            ADICIONAR AO CARRINHO
+                        </button>
                     </div>
-                    <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
 
-    <div class="footer-spacer">
+                    <!-- E também nos produtos relacionados -->
+                    {% for produto_relacionado in produtos_relacionados %}
+                    <div class="card" data-produto-id="{{ produto_relacionado.id }}">
+                        <a href="/visualizacao/{{ produto_relacionado.id }}">  <!-- Corrigido -->
+                            <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
+                                alt="{{ produto_relacionado.nome }}">
+                        </a>
+                        <div class="produto-nome">{{ produto_relacionado.nome }}</div>
+                        <div class="produto-preco">
+                            R$ {{ "%.2f"|format(produto_relacionado.preco) }}
+                        </div>
+                        <button type="button" class="btn-adicionar-card" 
+                                data-produto-id="{{ produto_relacionado.id }}">
+                            ADICIONAR AO CARRINHO
+                        </button>
+                    </div>
+                    {% endfor %}
+                                </div>
+                            </div>
+                        </section>
+
+    <!-- CORREÇÃO: Div fechada corretamente -->
+    <div>
         {% include 'layouts/footer.html' %}
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Passar os dados do Python para JavaScript
+        const tamanhos = {{ tamanhos | tojson }};
+        const cores = {{ cores | tojson }};
+        
+        document.getElementById('tamanho').addEventListener('change', function() {
+            const tamanhoId = parseInt(this.value);
+            const corSelect = document.getElementById('cor');
+            
+            // Limpar opções anteriores
+            corSelect.innerHTML = '<option disabled selected value="">Selecione uma cor</option>';
+            
+            // Filtrar cores pelo tamanho selecionado
+            const coresFiltradas = cores.filter(cor => cor.tamanho_id === tamanhoId);
+            
+            if (coresFiltradas.length > 0) {
+                coresFiltradas.forEach(cor => {
+                    const option = document.createElement('option');
+                    option.value = cor.id;
+                    option.textContent = cor.nome;
+                    corSelect.appendChild(option);
+                });
+                corSelect.disabled = false;
+            } else {
+                corSelect.innerHTML = '<option disabled selected value="">Nenhuma cor disponível</option>';
+                corSelect.disabled = true;
+            }
+        });
+
+        document.getElementById('cor').addEventListener('change', function() {
+            const corId = parseInt(this.value);
+            const tamanhoId = parseInt(document.getElementById('tamanho').value);
+            const quantidadeInput = document.getElementById('quantidade');
+            
+            // Encontrar o estoque para a combinação selecionada
+            const corSelecionada = cores.find(cor => cor.id === corId && cor.tamanho_id === tamanhoId);
+            const quantidadeDisponivel = corSelecionada ? corSelecionada.quantidade : 0;
+            console.log(quantidadeDisponivel);
+            
+            // Atualizar o atributo max do input de quantidade
+            quantidadeInput.max = quantidadeDisponivel;
+            if (parseInt(quantidadeInput.value) > quantidadeDisponivel) {
+                quantidadeInput.value = quantidadeDisponivel > 0 ? quantidadeDisponivel : 1;
+            }
+        });
+
+            // Garantir que os botões tenham os eventos corretos
+        document.addEventListener('DOMContentLoaded', function() {
+        //     // Seu script existente...
+            
+            // Inicializar botão de adicionar ao carrinho
+            const btnAdicionar = document.querySelector('.btn-adicionar-carrinho');
+          if (btnAdicionar) {
+                btnAdicionar.addEventListener('click', function() {
+                   // O script.js já cuida disso
+        });
+        }
+     });
+    </script>
 </body>
 </html>

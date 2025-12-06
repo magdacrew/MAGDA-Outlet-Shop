@@ -49,7 +49,9 @@ CREATE TABLE usuarios (
     cpf VARCHAR(14) UNIQUE,
     nascimento DATE NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ativo BOOLEAN NOT NULL DEFAULT TRUE;
 );
 
 CREATE TABLE produtos (
@@ -99,6 +101,20 @@ CREATE TABLE itens_venda (
     FOREIGN KEY (cor_id) REFERENCES cores(id)
 );
 
+CREATE TABLE enderecos_venda (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    venda_id INT NOT NULL,
+    cep VARCHAR(10),
+    logradouro VARCHAR(255),
+    numero VARCHAR(20),
+    complemento VARCHAR(255),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    estado VARCHAR(2),
+    destinatario VARCHAR(255),
+    FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE
+);
+
 /*
 Exemplo de inserção de produtos no estoque:
 */
@@ -138,5 +154,3 @@ Exemplo de Cadastro de clientes:
 INSERT INTO clientes(nome,email,telefone,cpf,data_nascimento)
 VALUES 
 ('Adrian Holz','holzadrian8@gmail.com','(47) 99784-5924','148.060.359-71','2008-06-06')
-
-

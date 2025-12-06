@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novo Produto - MAGDA CREW</title>
     
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 <body class="novo-produto-body">
     <div class="np-wrapper">
         {% include 'layouts/navbar.html' %}
         <h1 class="np-title">Adicionar novo produto</h1>
 
-        <form method="POST" action="/salvar" enctype="multipart/form-data" class="np-card">
+        <form method="POST" action="/admin/salvar" enctype="multipart/form-data" class="np-card">
 
             <div class="np-group">
                 <label>Nome do produto</label>
@@ -56,37 +56,108 @@
 
             <h2 class="np-subtitle">Adicionar ao Estoque</h2>
 
-            <div class="np-grid">
+            <!-- Container para múltiplas variações -->
+            <div id="variacoes-container">
+                <div class="variacao-item np-grid">
+                    <div class="np-group">
+                        <label>Tamanho</label>
+                        <select name="tamanho_id[]" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            {% for tamanho in tamanhos %}
+                                <option value={{tamanho.id}}>{{ tamanho.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="np-group">
+                        <label>Cor</label>
+                        <select name="cor_id[]" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            {% for cor in cores %}
+                                <option value={{cor.id}}>{{ cor.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="np-group">
+                        <label>Quantidade</label>
+                        <input type="number" name="quantidade[]" required>
+                    </div>
+
+                    <div class="np-group">
+                        <label>Ações</label>
+                        <button type="button" class="btn-remover" onclick="removerVariacao(this)" disabled>Remover</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-adicionar" onclick="adicionarVariacao()">+ Adicionar Variação</button>
+
+            <button type="submit" class="np-btn">Salvar Produto</button>
+        </form>
+    </div>
+    {% include 'layouts/footer.html' %}
+    <script>
+        function adicionarVariacao() {
+            const container = document.getElementById('variacoes-container');
+            const novoItem = document.createElement('div');
+            novoItem.className = 'variacao-item np-grid';
+            novoItem.innerHTML = `
                 <div class="np-group">
                     <label>Tamanho</label>
-                    <select name="tamanho_id" required>
-                        <option disabled selected>Selecione...</option>
+                    <select name="tamanho_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
                         {% for tamanho in tamanhos %}
-                            <option value={{tamanho.id}}>{{ tamanho.nome }}</option>
+                            <option value="{{tamanho.id}}">{{ tamanho.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div class="np-group">
                     <label>Cor</label>
-                    <select name="cor_id" required>
-                        <option disabled selected>Selecione...</option>
+                    <select name="cor_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
                         {% for cor in cores %}
-                            <option value={{cor.id}}>{{ cor.nome }}</option>
+                            <option value="{{cor.id}}">{{ cor.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div class="np-group">
                     <label>Quantidade</label>
-                    <input type="number" name="quantidade" required>
+                    <input type="number" name="quantidade[]" required>
                 </div>
-            </div>
 
-            <button type="submit" class="np-btn">Salvar Produto</button>
+                <div class="np-group">
+                    <label>Ações</label>
+                    <button type="button" class="btn-remover" onclick="removerVariacao(this)">Remover</button>
+                </div>
+            `;
+            container.appendChild(novoItem);
+            
+            // Habilitar botões de remover se houver mais de um item
+            atualizarBotoesRemover();
+        }
 
-    </div>
-    {% include 'layouts/footer.html' %}
+        function removerVariacao(botao) {
+            const itens = document.querySelectorAll('.variacao-item');
+            if (itens.length > 1) {
+                botao.closest('.variacao-item').remove();
+                atualizarBotoesRemover();
+            }
+        }
+
+        function atualizarBotoesRemover() {
+            const botoes = document.querySelectorAll('.btn-remover');
+            const itens = document.querySelectorAll('.variacao-item');
+            
+            if (itens.length === 1) {
+                botoes[0].disabled = true;
+            } else {
+                botoes.forEach(botao => botao.disabled = false);
+            }
+        }
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produtos - MAGDA CREW</title>
+    <title>Estoque - MAGDA CREW</title>
 
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
 
-<body class="produtos-page">
+<body class="estoque-page">
 
     {% include 'layouts/navbar.html' %}
 
-    <h2 class="destaques-title">Produtos</h2>
+    <h2 class="destaques-title">Estoque</h2>
     
+    <!-- BOTÃO CADASTRAR PRODUTO -->
+    <div class="cadastrar-produtos">
+        <a class="botao-cadastrar com-icone" href="/novo_produto">Cadastrar Produto</a>
+    </div>
+
     <!-- CONTAINER PRINCIPAL COM FILTRO E PRODUTOS -->
     <div class="main-produtos-container">
-          
-                    <!-- FILTRO NO CANTO ESQUERDO -->
+        
+        <!-- FILTRO NO CANTO ESQUERDO -->
         <div class="filtro-lateral">
             <h3>Filtrar Produtos</h3>
             
@@ -92,74 +97,68 @@
         </div>
 
         <!-- PRODUTOS NO LADO DIREITO -->
-        <div class="produtos-container">
-            {% for produto in produtos %}
-            <div class="card">
-                <div class="card-actions">
-                    </a>
-                </div>
-                <a href="/visualizacao/{{produto.id}}">
-                    <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
-                    alt="Produto" class="produto-imagem">
-                </a>
-                <div class="produto-nome">{{ produto.nome }}</div>
-                <div class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</div>
-                <button class="btn-comprar" onclick="abrirModalProduto({{ produto.id }})">
-                    ADICIONAR AO CARRINHO
-                </button>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <div id="modal-produto" class="modal-produto">
-        <div class="modal-produto-content">
-            <button class="modal-fechar">&times;</button>
+        <div class="estoque-produtos-container">
             
-            <div class="modal-produto-body">
-                <div class="modal-produto-imagem">
-                    <img id="modal-imagem" src="" alt="Produto">
-                </div>
-                
-                <div class="modal-produto-info">
-                    <h2 id="modal-nome"></h2>
-                    <div class="modal-produto-preco">
-                        <span id="modal-preco"></span>
-                        <div class="modal-parcelado" id="modal-parcelado"></div>
-                    </div>
-                    
-                    <div class="modal-produto-opcoes">
-                        <div class="modal-opcao-grupo">
-                            <label for="modal-tamanho">TAMANHO</label>
-                            <div class="modal-tamanhos" id="modal-tamanhos">
-                                <!-- Tamanhos serão carregados aqui -->
-                            </div>
+            <!-- SEÇÃO DE PRODUTOS ATIVOS -->
+            {% if produtos_ativos %}
+            <div class="estoque-secao">
+                <h3 class="estoque-secao-titulo">Produtos Ativos</h3>
+                <div class="estoque-grid-produtos">
+                    {% for produto in produtos_ativos %}
+                    <div class="estoque-card">
+                        <div class="estoque-card-actions">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                                <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
+                            </a>
+                            <a href="/admin/desativar_produto/{{ produto.id }}" class="estoque-btn-excluir" onclick="return confirm('Tem certeza que deseja desativar este produto?')">
+                                <img src="/static/images/excluir.png" alt="Botão de excluir produto" style="width:20px; height:20px;">
+                            </a>
                         </div>
-                        
-                        <div class="modal-opcao-grupo">
-                            <label for="modal-cor">COR</label>
-                            <div class="modal-cores" id="modal-cores">
-                                <!-- Cores serão carregadas aqui -->
-                            </div>
-                        </div>
-                        
-                        <div class="modal-opcao-grupo">
-                            <label for="modal-quantidade">QUANTIDADE</label>
-                            <div class="modal-quantidade">
-                                <button class="modal-quantidade-btn" id="modal-diminuir">-</button>
-                                <input type="number" id="modal-quantidade" value="1" min="1">
-                                <button class="modal-quantidade-btn" id="modal-aumentar">+</button>
-                            </div>
-                        </div>
+                        <a href="/visualizacao/{{produto.id}}">
+                            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                            alt="Produto" class="estoque-produto-imagem">
+                        </a>
+                        <div class="estoque-produto-nome">{{ produto.nome }}</div>
+                        <div class="estoque-produto-status ativo">ATIVO</div>
                     </div>
-                    
-                    <div class="modal-produto-acoes">
-                        <button class="btn-adicionar-modal" id="modal-adicionar">
-                            ADICIONAR AO CARRINHO
-                        </button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
+
+            <!-- SEÇÃO DE PRODUTOS DESATIVADOS -->
+            {% if produtos_desativados %}
+            <div class="estoque-secao">
+                <h3 class="estoque-secao-titulo">Produtos Desativados</h3>
+                <div class="estoque-grid-produtos">
+                    {% for produto in produtos_desativados %}
+                    <div class="estoque-card estoque-card-desativado">
+                        <div class="estoque-card-actions">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                                <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
+                            </a>
+                            <a href="/admin/reativar_produto/{{ produto.id }}" class="estoque-btn-reativar" onclick="return confirm('Tem certeza que deseja reativar este produto?')">
+                                <img src="/static/images/reativar.png" alt="Botão de reativar produto" style="width:20px; height:20px;">
+                            </a>
+                        </div>
+                        <a href="/visualizacao/{{produto.id}}">
+                            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                            alt="Produto" class="estoque-produto-imagem">
+                        </a>
+                        <div class="estoque-produto-nome">{{ produto.nome }}</div>
+                        <div class="estoque-produto-status desativado">DESATIVADO</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MENSAGEM SE NÃO HOUVER PRODUTOS -->
+            {% if not produtos_ativos and not produtos_desativados %}
+            <div class="estoque-sem-produtos">
+                <p>Nenhum produto encontrado com os filtros selecionados.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -170,7 +169,7 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     
     <script>
-            function aplicarFiltros() {
+    function aplicarFiltros() {
         // Coletar filtros selecionados
         const categorias = Array.from(document.querySelectorAll('input[name="categoria"]:checked'))
             .map(cb => cb.value);
@@ -190,7 +189,7 @@
         precos.forEach(preco => params.append('preco', preco));
         
         // Redirecionar para a mesma página com filtros
-        window.location.href = '/produtos?' + params.toString();
+        window.location.href = '/estoque?' + params.toString();
     }
 
     function limparFiltros() {
@@ -200,7 +199,7 @@
         });
         
         // Redirecionar para página sem filtros
-        window.location.href = '/produtos';
+        window.location.href = '/estoque';
     }
 
     // Função para marcar os filtros ativos quando a página carrega
