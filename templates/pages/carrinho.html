@@ -1,69 +1,132 @@
-<!-- templates/pages/carrinho.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrinho | MAGDA</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Carrinho - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
-<body>
+<body class="carrinho-page">
+    <!-- Incluir Navbar -->
     {% include 'layouts/navbar.html' %}
-    
-    <div class="container" style="margin-top: 140px; padding: 40px 20px;">
-        <h1>Meu Carrinho</h1>
-        
-        {% if itens %}
-            <div class="carrinho-container">
-                {% for item in itens %}
-                <div class="carrinho-item" style="display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid #eee;">
-                    <img src="{{ url_for('static', filename='uploads/' + item.imagem) if item.imagem else url_for('static', filename='images/default.png') }}" 
-                         alt="{{ item.nome }}" style="width: 120px; height: 120px; object-fit: cover;">
-                    <div style="flex: 1;">
-                        <h3>{{ item.nome }}</h3>
-                        {% if item.tamanho_nome or item.cor_nome %}
-                        <p>
-                            {% if item.tamanho_nome %}Tamanho: {{ item.tamanho_nome }}{% endif %}
-                            {% if item.cor_nome %} | Cor: {{ item.cor_nome }}{% endif %}
-                        </p>
-                        {% endif %}
-                        <p>Quantidade: {{ item.quantidade }}</p>
-                        <p>Preço: R$ {{ "%.2f"|format(item.preco|float) }}</p>
-                        <p>Subtotal: R$ {{ "%.2f"|format(item.subtotal|float) }}</p>
+
+    <div class="carrinho-wrapper">
+        <div class="carrinho-container">
+            <h1 class="carrinho-title">Meu Carrinho</h1>
+            
+            {% if itens_carrinho %}
+            <div class="carrinho-content">
+                <div class="carrinho-itens">
+                    {% for item in itens_carrinho %}
+                    <div class="carrinho-item">
+                        <div class="item-imagem">
+                            {% if item.imagem %}
+                            <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" alt="{{ item.nome }}">
+                            {% else %}
+                            <div class="sem-imagem">📦</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="item-info">
+                            <h3>{{ item.nome }}</h3>
+                            {% if item.tamanho or item.cor %}
+                            <p class="item-variacoes">
+                                {% if item.tamanho %}Tamanho: {{ item.tamanho }}{% endif %}
+                                {% if item.cor %} | Cor: {{ item.cor }}{% endif %}
+                            </p>
+                            {% endif %}
+                            
+                            <div class="item-preco">
+                                R$ {{ "%.2f"|format(item.preco) }}
+                            </div>
+                        </div>
+                        
+                        <div class="item-quantidade">
+                            <form action="{{ url_for('atualizar_carrinho', item_id=item.id) }}" method="POST" class="quantidade-form">
+                                <button type="button" class="qtd-btn minus">-</button>
+                                <input type="number" name="quantidade" value="{{ item.quantidade }}" min="1" class="qtd-input">
+                                <button type="button" class="qtd-btn plus">+</button>
+                                <button type="submit" class="btn-atualizar">Atualizar</button>
+                            </form>
+                        </div>
+                        
+                        <div class="item-subtotal">
+                            R$ {{ "%.2f"|format(item.subtotal) }}
+                        </div>
+                        
+                        <div class="item-remover">
+                            <a href="{{ url_for('remover_carrinho', item_id=item.id) }}" class="btn-remover">🗑️</a>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
                 
-                <div class="carrinho-totais" style="margin-top: 30px; padding: 20px; background: #f8f9fa;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div class="carrinho-resumo">
+                    <h2>Resumo do Pedido</h2>
+                    
+                    <div class="resumo-linha">
                         <span>Subtotal:</span>
                         <span>R$ {{ "%.2f"|format(subtotal) }}</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span>Frete estimado:</span>
-                        <span>R$ 15,90</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em;">
-                        <span>Total:</span>
-                        <span>R$ {{ "%.2f"|format(subtotal + 15.90) }}</span>
+                    
+                    <div class="resumo-linha">
+                        <span>Frete:</span>
+                        <span class="frete-gratis">Grátis ✓</span>
                     </div>
                     
-                    <a href="/checkout_dados" class="btn-iniciar-compra" style="display: block; margin-top: 20px; text-align: center;">
-                        FINALIZAR COMPRA
+                    <div class="resumo-total">
+                        <span>Total:</span>
+                        <span class="total-valor">R$ {{ "%.2f"|format(total) }}</span>
+                    </div>
+                    
+                    <a href="/checkout" class="btn-finalizar">
+                        Finalizar Compra →
+                    </a>
+                    
+                    <a href="/produtos" class="btn-continuar">
+                        Continuar Comprando
                     </a>
                 </div>
             </div>
-        {% else %}
-            <div style="text-align: center; padding: 60px 20px;">
-                <h3>Seu carrinho está vazio</h3>
-                <p>Adicione produtos para continuar</p>
-                <a href="/produtos" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #000; color: white; text-decoration: none;">
-                    VER PRODUTOS
-                </a>
+            
+            {% else %}
+            <div class="carrinho-vazio">
+                <div class="vazio-icon">🛒</div>
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos incríveis da MAGDA!</p>
+                <a href="/produtos" class="btn-explorar">Explorar Produtos</a>
             </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
-    
+
+    <!-- Incluir Footer -->
     {% include 'layouts/footer.html' %}
+
+    <script>
+        // Controles de quantidade
+        document.querySelectorAll('.qtd-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const form = this.closest('.quantidade-form');
+                const input = form.querySelector('.qtd-input');
+                let value = parseInt(input.value);
+                
+                if (this.classList.contains('plus')) {
+                    input.value = value + 1;
+                } else if (this.classList.contains('minus') && value > 1) {
+                    input.value = value - 1;
+                }
+            });
+        });
+        
+        // Enviar form ao mudar quantidade
+        document.querySelectorAll('.qtd-input').forEach(input => {
+            input.addEventListener('change', function() {
+                this.closest('form').submit();
+            });
+        });
+    </script>
 </body>
 </html>

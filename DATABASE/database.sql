@@ -49,7 +49,9 @@ CREATE TABLE usuarios (
     cpf VARCHAR(14) UNIQUE,
     nascimento DATE NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
-    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    data_cadastro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE;
 );
 
 CREATE TABLE produtos (
@@ -76,10 +78,8 @@ CREATE TABLE estoque(
     FOREIGN KEY (produto_id) REFERENCES produtos(id)
 );
 
--- Adicione estas tabelas ao seu banco de dados:
 
--- Tabela de vendas
-CREATE TABLE IF NOT EXISTS vendas (
+CREATE TABLE vendas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     usuario_id INT NOT NULL,
     valor_total DECIMAL(10,2) NOT NULL,
@@ -93,8 +93,7 @@ CREATE TABLE IF NOT EXISTS vendas (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
--- Tabela de endereços por venda
-CREATE TABLE IF NOT EXISTS enderecos_venda (
+CREATE TABLE enderecos_venda (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venda_id INT NOT NULL,
     cep VARCHAR(10),
@@ -108,8 +107,8 @@ CREATE TABLE IF NOT EXISTS enderecos_venda (
     FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE
 );
 
--- Tabela de itens da venda
-CREATE TABLE IF NOT EXISTS itens_venda (
+
+CREATE TABLE itens_venda (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venda_id INT NOT NULL,
     produto_id INT,
@@ -121,8 +120,8 @@ CREATE TABLE IF NOT EXISTS itens_venda (
     FOREIGN KEY (produto_id) REFERENCES produtos(id)
 );
 
--- Se você ainda não tem tabela de carrinho:
-CREATE TABLE IF NOT EXISTS carrinho (
+
+CREATE TABLE carrinho (
     id INT PRIMARY KEY AUTO_INCREMENT,
     usuario_id INT NOT NULL,
     produto_id INT NOT NULL,
@@ -135,43 +134,3 @@ CREATE TABLE IF NOT EXISTS carrinho (
     FOREIGN KEY (tamanho_id) REFERENCES tamanhos(id),
     FOREIGN KEY (cor_id) REFERENCES cores(id)
 );
-
-/*
-Exemplo de inserção de produtos no estoque:
-*/
-INSERT INTO estoque(produto_id, tamanho_id, cor_id, quantidade) VALUES
-(1, 1, 1, 50), -- P Preto 50 un
-(1, 2, 1, 30), -- M Preto 30 un
-(2, 3, 2, 20), -- G Branco 20 un
-
-/*
-Exemplo de inserção de produtos:
-*/
-
-INSERT INTO produtos(nome, descricao, preco, categoria_id,imagem) VALUES
-('Camiseta Básica', 'Camiseta de algodão básica disponível em várias cores e tamanhos.', 29.90, 1,'static/uploads/MAGDAtee.png'),
-('Casaco Jeans', 'Casaco jeans estiloso para todas as ocasiões.', 99.90, 2),
-('Calça Chino', 'Calça chino confortável e elegante.', 79.90, 3),
-('Bermuda Casual', 'Bermuda casual perfeita para o verão.', 49.90, 4),
-('Boné Esportivo', 'Boné esportivo com design moderno.', 19.90, 5);
-
-/*
-Exemplo de insertação de venda COMPLETA
-*/
---1. Inserindo venda:
-INSERT INTO itens_venda (venda_id, produto_id, tamanho_id, cor_id, quantidade, preco_unitario)
-VALUES 
-(1, 1, 2, 1, 2, 79.90),   -- 2 camisetas M preta
-(1, 2, 3, 2, 1, 159.90);  -- 1 moletom G branco
-
---2. Inserindo itens da venda:
-INSERT INTO vendas (cliente_id, valor_total, forma_pagamento)
-VALUES 
-(1, 259.90, 'PIX')
-
-/*
-Exemplo de Cadastro de clientes:
-*/
-INSERT INTO clientes(nome,email,telefone,cpf,data_nascimento)
-VALUES 
-('Adrian Holz','holzadrian8@gmail.com','(47) 99784-5924','148.060.359-71','2008-06-06')
