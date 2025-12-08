@@ -1,0 +1,17 @@
+# 🛍️ MAGDA — Loja de Roupas Online
+<img width="500" height="125" alt="logo_white" src="https://github.com/user-attachments/assets/3642326e-a7b3-49e8-bede-868a0f9fbdcb" />
+
+MAGDA é um projeto de e-commerce desenvolvido para uma loja de roupas com foco em preços acessíveis, experiência amigável e acessibilidade para todos os públicos.
+A plataforma foi criada com uma interface intuitiva, permitindo que qualquer pessoa navegue facilmente pelo catálogo, visualize produtos e encontre rapidamente o que procura.
+
+✨ Principais características
+
+Layout moderno e responsivo
+
+Navegação simples e intuitiva
+
+Catálogo de roupas com preços acessíveis
+
+Código organizado e fácil de manter
+
+Ideal para estudos, portfólio e expansão futura

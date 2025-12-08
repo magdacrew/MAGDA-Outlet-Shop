@@ -104,6 +104,7 @@
 
     <!-- Incluir Footer -->
     {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
     <script>
         // Controles de quantidade
@@ -128,5 +129,7 @@
             });
         });
     </script>
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

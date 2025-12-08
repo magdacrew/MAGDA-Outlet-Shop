@@ -209,3 +209,53 @@ VALUES
 (@produto_id, 3, 5, 10);   -- M, Cinza, 8 unidades
 (@produto_id, 4, 5, 10);   -- G,
 (@produto_id, 5, 5, 10);   -- G,
+
+
+
+-- 1) INSERIR PRODUTO
+INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
+VALUES (
+    'Signature Black Jorts',A 
+    'O Signature Black Jorts é uma bermuda confeccionada em jeans de alta durabilidade. A peça tem arte em laser na parte traseira que traz uma estética única pra peça. Com modelagem ampla e exclusiva, proporciona além de conforto, um caimento fluído ao corpo.',
+    249.90,          -- preço
+    4,             -- categoria_id 
+    'Signature_Black_Jorts.webp',  -- nome do arquivo
+    FALSE          -- destaque (TRUE/FALSE)
+);
+
+-- 2) PEGAR ID DO PRODUTO
+SET @produto_id = LAST_INSERT_ID();
+
+-- 3) INSERIR ESTOQUE (repita quantas variações quiser)
+INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
+VALUES
+(@produto_id, 1, 4, 10),  -- PP, Preto, 10 unidades
+(@produto_id, 2, 4, 10),  -- P, Preto, 15 unidades
+(@produto_id, 3, 4, 10);   -- M, Cinza, 8 unidades
+(@produto_id, 4, 4, 10);   -- G,
+(@produto_id, 5, 4, 10);   -- G,
+
+
+
+-- 1) INSERIR PRODUTO
+INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
+VALUES (
+    'Memories 2.0 Boxy Tee',A 
+    'A Memories 2.0® Boxy Tee Vermelha traz o caimento amplo perfeito, tecido macio e visual minimalista que destaca qualquer look. Uma peça versátil, confortável e com aquele toque street na medida certa.',
+    189.90,          -- preço
+    1 ,             -- categoria_id 
+    'Memories_2.0_Boxy_Tee.webp',  -- nome do arquivo
+    FALSE          -- destaque (TRUE/FALSE)
+);
+
+-- 2) PEGAR ID DO PRODUTO
+SET @produto_id = LAST_INSERT_ID();
+
+-- 3) INSERIR ESTOQUE (repita quantas variações quiser)
+INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
+VALUES
+(@produto_id, 1, 4, 10),  -- PP, Preto, 10 unidades
+(@produto_id, 2, 4, 10),  -- P, Preto, 15 unidades
+(@produto_id, 3, 4, 10);   -- M, Cinza, 8 unidades
+(@produto_id, 4, 4, 10);   -- G,
+(@produto_id, 5, 4, 10);   -- G,
