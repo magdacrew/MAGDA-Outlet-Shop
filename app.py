@@ -21,7 +21,7 @@ app.config['SESSION_COOKIE_SECURE'] = False  # True em produção com HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 def conectar():
-    return mysql.connector.connect(host='localhost', user='root', port='3306', database='magda_crew')
+    return mysql.connector.connect(host='localhost', user='root', port='3406', database='crew_magda')
 
 # ==================== DECORATORS DE AUTENTICAÇÃO ====================
 
@@ -486,9 +486,11 @@ def usuario():
 
 @app.route("/carrinho")
 def carrinho_page():
+        
+    try:
         conexao = conectar()
         cursor = conexao.cursor(dictionary=True)
-        
+    
         # Buscar itens do carrinho
         cursor.execute("""
             SELECT c.*, p.nome, p.imagem, p.descricao, p.preco,
@@ -514,6 +516,12 @@ def carrinho_page():
                              subtotal=subtotal,
                              frete=frete,
                              total=total)
+
+    except Exception as e:
+        cursor.close()
+        conexao.close()
+        flash(f"Erro ao carregar o carrinho: {str(e)}", "error")
+        return redirect("/")
         
 
 @app.route("/adicionar_carrinho/<int:produto_id>", methods=['POST'])
