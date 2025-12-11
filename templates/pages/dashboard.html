@@ -9,23 +9,7 @@
     <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <style>
-        /* Estilos inline para garantir funcionamento imediato */
-        .dashboard-page .navbar {
-            background: rgba(0, 0, 0, 0.95) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .dashboard-page .nav-menu li a {
-            color: white !important;
-        }
-        
-        .dashboard-page .logo,
-        .dashboard-page .nav-icon {
-            filter: brightness(0) invert(1);
-        }
-    </style>
+
 </head>
 <body class="dashboard-page">
     
@@ -162,13 +146,13 @@
                     <div class="action-icon">📊</div>
                     <div class="action-text">Ver Estoque</div>
                 </a>
-                <a href="/vendas" class="action-btn">
+                <a href="/admin/relatorios" class="action-btn">
                     <div class="action-icon">💰</div>
                     <div class="action-text">Relatório de Vendas</div>
                 </a>
-                <a href="/visualizar_clientes" class="action-btn">
+                <a href=/admin/gerenciar_clientes class="action-btn">
                     <div class="action-icon">👥</div>
-                    <div class="action-text">Visualizar Clientes</div>
+                    <div class="action-text">Gerenciar Clientes</div>
                 </a>
             </div>
         </div>
@@ -177,7 +161,6 @@
     <div class="footer-spacer">
         {% include 'layouts/footer.html' %}
     </div>
-    
     <script>
         // Script para garantir navbar escura no dashboard
         document.addEventListener('DOMContentLoaded', function() {

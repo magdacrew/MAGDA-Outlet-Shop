@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -13,6 +14,9 @@ app.secret_key = 'MAGDA_GAE'
 
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
 
 # Configurações de sessão
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -24,12 +28,49 @@ def conectar():
 
 # ==================== DECORATORS DE AUTENTICAÇÃO ====================
 
+
+def verificar_conta_ativa():
+    """Função auxiliar para verificar se a conta do usuário está ativa"""
+    if 'usuario_id' not in session:
+        return True  # Se não está logado, não precisa verificar
+        
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT ativo, nome_completo 
+            FROM usuarios 
+            WHERE id = %s
+        """, (session['usuario_id'],))
+        usuario = cursor.fetchone()
+        cursor.close()
+        conexao.close()
+        
+        # Se usuário não existe ou está desativado
+        if not usuario or not usuario.get('ativo', True):
+            return False, usuario.get('nome_completo', 'Usuário') if usuario else 'Usuário'
+        
+        return True, usuario.get('nome_completo', 'Usuário')
+        
+    except Exception as e:
+        print(f"Erro ao verificar conta ativa: {e}")
+        # Em caso de erro, assume que está ativo para não bloquear o usuário
+        return True, 'Usuário'
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'usuario_id' not in session:
             flash("Você precisa fazer login para acessar esta página", "error")
             return redirect('/login')
+        
+        # VERIFICAÇÃO DE CONTA ATIVA - NOVO
+        conta_ativa, nome_usuario = verificar_conta_ativa()
+        if not conta_ativa:
+            session.clear()
+            flash(f"Sua conta ({nome_usuario}) foi desativada. Entre em contato com o administrador.", "error")
+            return redirect('/login')
+        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -40,10 +81,21 @@ def admin_required(f):
             flash("Você precisa fazer login para acessar esta página", "error")
             return redirect('/login')
         
+        # VERIFICAÇÃO DE CONTA ATIVA - NOVO
+        conta_ativa, nome_usuario = verificar_conta_ativa()
+        if not conta_ativa:
+            session.clear()
+            flash(f"Sua conta ({nome_usuario}) foi desativada. Entre em contato com o administrador.", "error")
+            return redirect('/login')
+        
         # Verificar se é admin
         conexao = conectar()
         cursor = conexao.cursor(dictionary=True)
-        cursor.execute("SELECT is_admin FROM usuarios WHERE id = %s", (session['usuario_id'],))
+        cursor.execute("""
+            SELECT is_admin, nome_completo 
+            FROM usuarios 
+            WHERE id = %s
+        """, (session['usuario_id'],))
         usuario = cursor.fetchone()
         cursor.close()
         conexao.close()
@@ -60,14 +112,25 @@ def verificar_permissao_admin():
     if 'usuario_id' not in session:
         return False
     
+    # VERIFICAÇÃO DE CONTA ATIVA - NOVO
+    conta_ativa, _ = verificar_conta_ativa()
+    if not conta_ativa:
+        session.clear()
+        return False
+    
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
-    cursor.execute("SELECT is_admin FROM usuarios WHERE id = %s", (session['usuario_id'],))
+    cursor.execute("""
+        SELECT is_admin, ativo 
+        FROM usuarios 
+        WHERE id = %s
+    """, (session['usuario_id'],))
     usuario = cursor.fetchone()
     cursor.close()
     conexao.close()
     
-    return usuario and usuario.get('is_admin')
+    # Verifica se usuário existe, está ativo e é admin
+    return usuario and usuario.get('ativo', True) and usuario.get('is_admin')
 
 # ==================== ROTAS PÚBLICAS ====================
 
@@ -101,7 +164,6 @@ def contato():
 def produtos():
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
-
     # Coletar parâmetros de filtro da URL
     categorias_filtro = request.args.getlist('categoria')
     tamanhos_filtro = request.args.getlist('tamanho')
@@ -321,6 +383,7 @@ def cadastro():
             return render_template("auth/cadastro.html")
     return render_template("auth/cadastro.html")
 
+#---LOGIN---#
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -335,41 +398,54 @@ def login():
             conexao = conectar()
             cursor = conexao.cursor(dictionary=True)
 
+            # MODIFICADO: Adicionar coluna 'ativo' na consulta
             cursor.execute("""
-                SELECT id, nome_completo, email, senha_hash, is_admin, ativo
+                SELECT id, nome_completo, email, cpf, senha_hash, is_admin, ativo 
                 FROM usuarios 
                 WHERE email = %s
             """, (email,))
             
             usuario = cursor.fetchone()
-            cursor.close()
-            conexao.close()
-
-            # ❌ Usuário não existe
-            if not usuario:
+            
+            if usuario:
+                # VERIFICAÇÃO DE CONTA ATIVA - NOVO
+                if not usuario.get('ativo', True):  # Se não tiver coluna ativo, assume True
+                    cursor.close()
+                    conexao.close()
+                    flash('Sua conta está desativada. Entre em contato com o administrador.', 'error')
+                    return render_template("auth/login.html")
+                
+                # Verificar senha
+                if check_password_hash(usuario['senha_hash'], senha):
+                    # Login bem-sucedido
+                    session['usuario_id'] = usuario['id']
+                    session['usuario_nome'] = usuario['nome_completo']
+                    session['usuario_email'] = usuario['email']
+                    session['usuario_cpf'] = usuario['cpf']
+                    session['is_admin'] = usuario['is_admin']
+                    
+                    flash(f'Bem-vindo(a) de volta, {usuario["nome_completo"]}!', 'success')
+                    
+                    cursor.close()
+                    conexao.close()
+                    
+                    return redirect('/')
+                else:
+                    cursor.close()
+                    conexao.close()
+                    flash('E-mail ou senha incorretos.', 'error')
+                    return render_template("auth/login.html")
+            else:
+                cursor.close()
+                conexao.close()
                 flash('E-mail ou senha incorretos.', 'error')
                 return render_template("auth/login.html")
-
-            # ❌ Usuário desativado → BLOQUEAR login
-            if usuario["ativo"] == 0:
-                flash("Sua conta está DESATIVADA. Fale com o suporte.", "error")
-                return render_template("auth/login.html")
-
-            # ❌ Senha incorreta
-            if not check_password_hash(usuario['senha_hash'], senha):
-                flash('E-mail ou senha incorretos.', 'error')
-                return render_template("auth/login.html")
-
-            # ✅ LOGIN PERMITIDO
-            session['usuario_id'] = usuario['id']
-            session['usuario_nome'] = usuario['nome_completo']
-            session['usuario_email'] = usuario['email']
-            session['is_admin'] = usuario['is_admin']
-
-            flash(f'Bem-vindo(a) de volta, {usuario["nome_completo"]}!', 'success')
-            return redirect('/')
 
         except Exception as e:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conexao' in locals():
+                conexao.close()
             flash(f'Erro ao fazer login: {str(e)}', 'error')
             return render_template("auth/login.html")
 
@@ -394,7 +470,16 @@ def usuario():
             WHERE id = %s
         """, (session["usuario_id"],))
 
-        usuario = cursor.fetchone()
+        cursor.execute("""
+            SELECT i.*, p.nome, p.imagem, p.preco,
+                (i.quantidade * p.preco) as subtotal
+            FROM itens_venda i
+            JOIN produtos p ON c.produto_id = p.id
+            WHERE c.usuario_id = %s AND p.ativo = TRUE
+            ORDER BY c.data_adicao DESC
+        """, (session['usuario_id'],))
+
+        it = cursor.fetchone()
 
         cursor.close()
         conexao.close()
@@ -409,8 +494,429 @@ def usuario():
         flash(f"Erro ao carregar informações: {str(e)}", "error")
         return redirect("/")
 
-# ==================== ÁREA ADMINISTRATIVA ====================
+# ==================== CARRINHO DE COMPRAS ====================
 
+@app.route("/carrinho")
+def carrinho_page():
+        
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+    
+        # Buscar itens do carrinho
+        cursor.execute("""
+            SELECT c.*, p.nome, p.imagem, p.descricao, p.preco,
+                (c.quantidade * p.preco) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            WHERE c.usuario_id = %s AND p.ativo = TRUE
+            ORDER BY c.data_adicao DESC
+        """, (session['usuario_id'],))
+        
+        itens_carrinho = cursor.fetchall()
+        
+        # Calcular totais
+        subtotal = sum(item['subtotal'] for item in itens_carrinho)
+        frete = 0  # Frete grátis para este exemplo
+        total = subtotal + frete
+        
+        cursor.close()
+        conexao.close()
+        
+        return render_template("/pages/carrinho.html", 
+                             itens_carrinho=itens_carrinho,
+                             subtotal=subtotal,
+                             frete=frete,
+                             total=total)
+
+    except Exception as e:
+        cursor.close()
+        conexao.close()
+        flash(f"Erro ao carregar o carrinho: {str(e)}", "error")
+        return redirect("/")
+        
+
+@app.route("/adicionar_carrinho/<int:produto_id>", methods=['POST'])
+@login_required
+def adicionar_carrinho(produto_id):
+    try:
+        if 'usuario_id' not in session:
+            return jsonify({'success': False, 'message': 'Usuário não autenticado'}), 401
+        
+        quantidade = int(request.form.get('quantidade', 1))
+        tamanho_id = request.form.get('tamanho_id', '')
+        cor_id = request.form.get('cor_id', '')
+        
+        # Validações
+        if quantidade < 1:
+            return jsonify({'success': False, 'message': 'Quantidade inválida'}), 400
+        
+        if not tamanho_id or not cor_id:
+            return jsonify({'success': False, 'message': 'Selecione tamanho e cor'}), 400
+        
+        try:
+            tamanho_id = int(tamanho_id)
+            cor_id = int(cor_id)
+        except ValueError:
+            return jsonify({'success': False, 'message': 'Tamanho ou cor inválidos'}), 400
+        
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Buscar produto
+        cursor.execute("""
+            SELECT p.id, p.nome, p.preco
+            FROM produtos p
+            WHERE p.id = %s AND p.ativo = TRUE
+        """, (produto_id,))
+        
+        produto = cursor.fetchone()
+        
+        if not produto:
+            cursor.close()
+            conexao.close()
+            return jsonify({'success': False, 'message': 'Produto não encontrado'}), 404
+        
+        # Verificar estoque
+        cursor.execute("""
+            SELECT quantidade 
+            FROM estoque
+            WHERE produto_id = %s 
+            AND tamanho_id = %s 
+            AND cor_id = %s
+        """, (produto_id, tamanho_id, cor_id))
+        
+        estoque = cursor.fetchone()
+        
+        if not estoque:
+            cursor.close()
+            conexao.close()
+            return jsonify({'success': False, 'message': 'Combinação de tamanho/cor não disponível'}), 400
+        
+        estoque_disponivel = estoque['quantidade']
+        
+        if estoque_disponivel <= 0:
+            cursor.close()
+            conexao.close()
+            return jsonify({'success': False, 'message': 'Produto esgotado para esta combinação'}), 400
+        
+        if quantidade > estoque_disponivel:
+            cursor.close()
+            conexao.close()
+            return jsonify({'success': False, 'message': f'Estoque insuficiente. Disponível: {estoque_disponivel}'}), 400
+        
+        # Verificar se já existe no carrinho
+        cursor.execute("""
+            SELECT id, quantidade 
+            FROM carrinho 
+            WHERE usuario_id = %s 
+            AND produto_id = %s 
+            AND tamanho_id = %s 
+            AND cor_id = %s
+        """, (session['usuario_id'], produto_id, tamanho_id, cor_id))
+        
+        item_existente = cursor.fetchone()
+        
+        if item_existente:
+            nova_quantidade_total = item_existente['quantidade'] + quantidade
+            
+            if nova_quantidade_total > estoque_disponivel:
+                cursor.close()
+                conexao.close()
+                return jsonify({'success': False, 'message': f'Limite de estoque atingido. Disponível: {estoque_disponivel}'}), 400
+            
+            cursor.execute("""
+                UPDATE carrinho 
+                SET quantidade = %s, data_adicao = NOW()
+                WHERE id = %s
+            """, (nova_quantidade_total, item_existente['id']))
+            mensagem = f"Quantidade atualizada para {nova_quantidade_total}!"
+        else:
+            cursor.execute("""
+                INSERT INTO carrinho 
+                (usuario_id, produto_id, quantidade, tamanho_id, cor_id, data_adicao)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (session['usuario_id'], produto_id, quantidade, tamanho_id, cor_id))
+            mensagem = f"{produto['nome']} adicionado ao carrinho!"
+        
+        # Contar itens no carrinho para atualizar badge
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM carrinho 
+            WHERE usuario_id = %s
+        """, (session['usuario_id'],))
+        
+        carrinho_count = cursor.fetchone()['count']
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({
+            'success': True,
+            'message': mensagem,
+            'carrinho_count': carrinho_count
+        })
+        
+    except Exception as e:
+        print(f"Erro ao adicionar ao carrinho: {str(e)}")
+        return jsonify({'success': False, 'message': 'Erro ao adicionar produto ao carrinho'}), 500
+
+@app.route("/remover_carrinho/<int:item_id>")
+@login_required
+def remover_carrinho(item_id):
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor()
+        
+        cursor.execute("""
+            DELETE FROM carrinho 
+            WHERE id = %s AND usuario_id = %s
+        """, (item_id, session['usuario_id']))
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        flash("Item removido do carrinho", "success")
+        return redirect("/carrinho")
+        
+    except Exception as e:
+        flash(f"Erro ao remover item: {str(e)}", "error")
+        return redirect("/carrinho")
+
+@app.route("/atualizar_carrinho/<int:item_id>", methods=['POST'])
+@login_required
+def atualizar_carrinho(item_id):
+    try:
+        quantidade = int(request.form.get('quantidade', 1))
+        
+        if quantidade <= 0:
+            return redirect("/remover_carrinho/" + str(item_id))
+        
+        conexao = conectar()
+        cursor = conexao.cursor()
+        
+        cursor.execute("""
+            UPDATE carrinho 
+            SET quantidade = %s 
+            WHERE id = %s AND usuario_id = %s
+        """, (quantidade, item_id, session['usuario_id']))
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        flash("Quantidade atualizada", "success")
+        return redirect("/carrinho")
+        
+    except Exception as e:
+        flash(f"Erro ao atualizar: {str(e)}", "error")
+        return redirect("/carrinho")
+    
+# ==================== CHECKOUT ====================
+
+@app.route("/checkout")
+@login_required
+def checkout():
+
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Buscar itens do carrinho com detalhes completos
+        cursor.execute("""
+            SELECT 
+                c.id,
+                c.quantidade,
+                p.id as produto_id,
+                p.nome,
+                p.preco,
+                p.imagem,
+                t.nome as tamanho_nome,
+                cr.nome as cor_nome,
+                (c.quantidade * p.preco) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cr ON c.cor_id = cr.id
+            WHERE c.usuario_id = %s
+            ORDER BY c.data_adicao DESC
+        """, (session['usuario_id'],))
+        
+        itens = cursor.fetchall()
+        
+        if not itens:
+            flash("Seu carrinho está vazio", "warning")
+            return redirect("/carrinho")
+        
+        # Calcular totais
+        subtotal = sum(float(item['subtotal']) for item in itens if item['subtotal'])
+        frete = 0  # Frete grátis ou calcular depois
+        total = subtotal + frete
+        
+        # Buscar dados do usuário
+        cursor.execute("""
+            SELECT 
+                nome_completo, 
+                email, 
+                telefone, 
+                cpf,
+                nascimento
+            FROM usuarios 
+            WHERE id = %s
+        """, (session['usuario_id'],))
+        
+        usuario = cursor.fetchone()
+        
+        # Buscar endereço da última venda do usuário (se houver)
+        cursor.execute("""
+            SELECT ev.* 
+            FROM enderecos_venda ev
+            JOIN vendas v ON ev.venda_id = v.id
+            WHERE v.usuario_id = %s
+            ORDER BY v.data_venda DESC
+            LIMIT 1
+        """, (session['usuario_id'],))
+        
+        endereco = cursor.fetchone()
+        
+        cursor.close()
+        conexao.close()
+        
+        return render_template("/pages/checkout.html",
+                             itens=itens,
+                             subtotal=subtotal,
+                             frete=frete,
+                             total=total,
+                             usuario=usuario,
+                             endereco=endereco)
+        
+        
+
+@app.route("/finalizar_compra", methods=['POST'])
+@login_required
+def finalizar_compra():
+
+        # Coletar dados do formulário
+        forma_pagamento = request.form.get('forma_pagamento', 'simulacao')
+        cep = request.form.get('cep', '')
+        logradouro = request.form.get('logradouro', '')
+        numero = request.form.get('numero', '')
+        complemento = request.form.get('complemento', '')
+        bairro = request.form.get('bairro', '')
+        cidade = request.form.get('cidade', '')
+        estado = request.form.get('estado', '')
+        destinatario = request.form.get('destinatario', '')
+        cpf_cnpj_nota = request.form.get('cpf_cnpj_nota', '')
+        
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Buscar itens do carrinho com todos os detalhes
+        cursor.execute("""
+            SELECT 
+                c.id,
+                c.quantidade,
+                c.produto_id,
+                c.tamanho_id,
+                c.cor_id,
+                p.nome,
+                p.preco,
+                t.nome as tamanho_nome,
+                cr.nome as cor_nome,
+                (c.quantidade * p.preco) as subtotal
+            FROM carrinho c
+            JOIN produtos p ON c.produto_id = p.id
+            LEFT JOIN tamanhos t ON c.tamanho_id = t.id
+            LEFT JOIN cores cr ON c.cor_id = cr.id
+            WHERE c.usuario_id = %s
+        """, (session['usuario_id'],))
+        
+        itens = cursor.fetchall()
+        
+        if not itens:
+            flash("Seu carrinho está vazio", "warning")
+            return redirect("/carrinho")
+        
+        # Calcular totais
+        subtotal = sum(float(item['subtotal']) for item in itens)
+        frete = 0  # Frete grátis
+        total = subtotal + frete
+        
+        # Verificar estoque para cada item
+        for item in itens:
+            cursor.execute("""
+                SELECT quantidade 
+                FROM estoque 
+                WHERE produto_id = %s 
+                AND tamanho_id = %s 
+                AND cor_id = %s
+            """, (item['produto_id'], item['tamanho_id'], item['cor_id']))
+            
+            estoque = cursor.fetchone()
+            
+            if not estoque:
+                flash(f"Produto '{item['nome']}' não disponível nesta combinação", "error")
+                return redirect("/carrinho")
+            
+            if item['quantidade'] > estoque['quantidade']:
+                flash(f"Estoque insuficiente para '{item['nome']}'. Disponível: {estoque['quantidade']}", "error")
+                return redirect("/carrinho")
+        
+        # Inserir venda
+        cursor.execute("""
+            INSERT INTO vendas 
+            (usuario_id, valor_total, subtotal, valor_frete, forma_pagamento, 
+             frete_tipo, cpf_cnpj_nota, status, data_venda)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+        """, (session['usuario_id'], total, subtotal, frete, 
+              forma_pagamento, 'grátis', cpf_cnpj_nota, 'confirmado'))
+        
+        venda_id = cursor.lastrowid
+        
+        # Inserir endereço da venda
+        cursor.execute("""
+            INSERT INTO enderecos_venda 
+            (venda_id, cep, logradouro, numero, complemento, 
+             bairro, cidade, estado, destinatario)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (venda_id, cep, logradouro, numero, complemento, 
+              bairro, cidade, estado, destinatario))
+        
+        # Inserir itens da venda e atualizar estoque
+        for item in itens:
+            # Inserir item da venda
+            cursor.execute("""
+                INSERT INTO itens_venda 
+                (venda_id, produto_id, quantidade, preco_unitario, tamanho, cor)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (venda_id, item['produto_id'], item['quantidade'], 
+                  item['preco'], item['tamanho_nome'], item['cor_nome']))
+            
+            # Atualizar estoque na tabela estoque
+            cursor.execute("""
+                UPDATE estoque 
+                SET quantidade = quantidade - %s 
+                WHERE produto_id = %s 
+                AND tamanho_id = %s 
+                AND cor_id = %s
+            """, (item['quantidade'], item['produto_id'], 
+                  item['tamanho_id'], item['cor_id']))
+        
+        # Limpar carrinho
+        cursor.execute("DELETE FROM carrinho WHERE usuario_id = %s", (session['usuario_id'],))
+        
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+        
+        # Redirecionar para página de confirmação
+        return redirect(f"/")
+        
+
+        
+
+# ==================== ÁREA ADMINISTRATIVA ====================
+        
 @app.route("/admin/login", methods=['GET', 'POST'])
 def admin_login():
     # Redirecionar se já estiver logado como admin
@@ -739,7 +1245,7 @@ def salvar_produto():
     imagem_nome = None
     
     if imagem_file and imagem_file.filename != "":
-        imagem_nome = secure_filename(imagem_file.filename)
+        imagem_nome = secure_filename(imagem_file.filename) 
         imagem_file.save(os.path.join(app.config["UPLOAD_FOLDER"], imagem_nome))
 
     if nome.strip() == "":
@@ -1009,166 +1515,469 @@ def toggle_destaque(id):
     
     return redirect("/admin/estoque")
 
-#/VISUALIZAR CLIENTES/#
-@app.route("/admin/visualizar_clientes")
+# ==================== RELATÓRIOS DE VENDAS ====================
+
+@app.route("/admin/relatorios")
 @admin_required
-def gerenciar_clientes():
+def relatorios():
+    """Página principal de relatórios"""
+    return render_template("admin/relatorios.html")
+
+@app.route("/admin/relatorios/vendas", methods=['GET', 'POST'])
+@admin_required
+def relatorios_vendas():
+    """Relatório detalhado de vendas com filtros"""
+    # Valores padrão
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    status = request.args.get('status', '')
+    forma_pagamento = request.args.get('forma_pagamento', '')
+    
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
+    
+    # Query base
+    sql = """
+        SELECT 
+            v.id,
+            v.data_venda,
+            v.valor_total,
+            v.subtotal,
+            v.valor_frete,
+            v.forma_pagamento,
+            v.status,
+            v.cpf_cnpj_nota,
+            u.nome_completo as cliente_nome,
+            u.email as cliente_email,
+            COUNT(iv.id) as quantidade_itens
+        FROM vendas v
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+        WHERE 1=1
+    """
+    params = []
+    
+    # Aplicar filtros
+    if data_inicio:
+        sql += " AND DATE(v.data_venda) >= %s"
+        params.append(data_inicio)
+    
+    if data_fim:
+        sql += " AND DATE(v.data_venda) <= %s"
+        params.append(data_fim)
+    
+    if status and status != 'todos':
+        sql += " AND v.status = %s"
+        params.append(status)
+    
+    if forma_pagamento and forma_pagamento != 'todos':
+        sql += " AND v.forma_pagamento = %s"
+        params.append(forma_pagamento)
+    
+    sql += " GROUP BY v.id ORDER BY v.data_venda DESC"
+    
+    cursor.execute(sql, params)
+    vendas = cursor.fetchall()
+    
+    # Calcular totais
+    sql_totais = """
+        SELECT 
+            COUNT(*) as total_vendas,
+            COALESCE(SUM(valor_total), 0) as valor_total,
+            COALESCE(SUM(subtotal), 0) as subtotal_total,
+            COALESCE(SUM(valor_frete), 0) as frete_total,
+            AVG(valor_total) as ticket_medio
+        FROM vendas
+        WHERE 1=1
+    """
+    params_totais = []
+    
+    if data_inicio:
+        sql_totais += " AND DATE(data_venda) >= %s"
+        params_totais.append(data_inicio)
+    
+    if data_fim:
+        sql_totais += " AND DATE(data_venda) <= %s"
+        params_totais.append(data_fim)
+    
+    if status and status != 'todos':
+        sql_totais += " AND status = %s"
+        params_totais.append(status)
+    
+    if forma_pagamento and forma_pagamento != 'todos':
+        sql_totais += " AND forma_pagamento = %s"
+        params_totais.append(forma_pagamento)
+    
+    cursor.execute(sql_totais, params_totais)
+    totais = cursor.fetchone()
+    
+    # Estatísticas por período
+    sql_periodo = """
+        SELECT 
+            DATE_FORMAT(data_venda, '%%Y-%%m') as mes,
+            COUNT(*) as quantidade,
+            SUM(valor_total) as valor_total,
+            AVG(valor_total) as ticket_medio
+        FROM vendas
+        WHERE data_venda >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY DATE_FORMAT(data_venda, '%%Y-%%m')
+        ORDER BY mes DESC
+    """
+    cursor.execute(sql_periodo)
+    vendas_por_mes = cursor.fetchall()
+    
+    # Top produtos
+    sql_top_produtos = """
+        SELECT 
+            p.nome,
+            p.id,
+            SUM(iv.quantidade) as quantidade_vendida,
+            SUM(iv.quantidade * iv.preco_unitario) as valor_total
+        FROM itens_venda iv
+        JOIN produtos p ON iv.produto_id = p.id
+        JOIN vendas v ON iv.venda_id = v.id
+        WHERE 1=1
+    """
+    params_top = []
+    
+    if data_inicio:
+        sql_top_produtos += " AND DATE(v.data_venda) >= %s"
+        params_top.append(data_inicio)
+    
+    if data_fim:
+        sql_top_produtos += " AND DATE(v.data_venda) <= %s"
+        params_top.append(data_fim)
+    
+    sql_top_produtos += " GROUP BY p.id, p.nome ORDER BY quantidade_vendida DESC LIMIT 10"
+    cursor.execute(sql_top_produtos, params_top)
+    top_produtos = cursor.fetchall()
+    
+    cursor.close()
+    conexao.close()
+    
+    # Formatar valores
+    if totais:
+        totais['valor_total'] = float(totais['valor_total'] or 0)
+        totais['subtotal_total'] = float(totais['subtotal_total'] or 0)
+        totais['frete_total'] = float(totais['frete_total'] or 0)
+        totais['ticket_medio'] = float(totais['ticket_medio'] or 0)
+    
+    return render_template("/admin/relatorios_venda.html",
+                         vendas=vendas,
+                         totais=totais,
+                         vendas_por_mes=vendas_por_mes,
+                         top_produtos=top_produtos,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim,
+                         status=status,
+                         forma_pagamento=forma_pagamento)
 
+@app.route("/admin/relatorios/vendas/<int:venda_id>")
+@admin_required
+def detalhes_venda(venda_id):
+    """Detalhes de uma venda específica"""
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    # Informações da venda
     cursor.execute("""
         SELECT 
-            id,
-            nome_completo,
-            email,
-            telefone,
-            cpf,
-            nascimento,
-            data_cadastro,
-            ativo
-        FROM usuarios
-        ORDER BY data_cadastro DESC
-    """)
+            v.*,
+            u.nome_completo,
+            u.email,
+            u.telefone,
+            u.cpf,
+            ev.cep,
+            ev.logradouro,
+            ev.numero,
+            ev.complemento,
+            ev.bairro,
+            ev.cidade,
+            ev.estado,
+            ev.destinatario
+        FROM vendas v
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        LEFT JOIN enderecos_venda ev ON v.id = ev.venda_id
+        WHERE v.id = %s
+    """, (venda_id,))
+    venda = cursor.fetchone()
     
-    clientes = cursor.fetchall()
-
+    if not venda:
+        cursor.close()
+        conexao.close()
+        flash("Venda não encontrada", "error")
+        return redirect("/admin/relatorios/vendas")
+    
+    # Itens da venda
+    cursor.execute("""
+        SELECT 
+            iv.*,
+            p.nome as produto_nome,
+            p.imagem
+        FROM itens_venda iv
+        LEFT JOIN produtos p ON iv.produto_id = p.id
+        WHERE iv.venda_id = %s
+    """, (venda_id,))
+    itens = cursor.fetchall()
+    
     cursor.close()
-    conexao.close() 
+    conexao.close()
+    
+    return render_template("admin/detalhes_venda.html",
+                         venda=venda,
+                         itens=itens)
 
-    return render_template("/auth/visualizar_clientes.html", clientes=clientes)
-
-
-#/EDITAR CLIENTE/#
-@app.route("/admin/editar_cliente/<int:id>", methods=["GET", "POST"])
+@app.route("/admin/relatorios/vendas/exportar")
 @admin_required
-def editar_cliente(id):
+def exportar_vendas():
+    """Exportar relatório de vendas para CSV"""
+    import csv
+    from io import StringIO
+    
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    status = request.args.get('status', '')
+    forma_pagamento = request.args.get('forma_pagamento', '')
+    
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
-    cliente = cursor.fetchone()
-
-    if not cliente:
-        cursor.close()
-        conexao.close()
-        return "Cliente não encontrado", 404    
-
-    if request.method == "POST":
-        nome = request.form["nome"]
-        email = request.form["email"]
-        telefone = request.form["telefone"]
-        cpf = request.form["cpf"]
-        nascimento = request.form["nascimento"]
-
-        cursor.execute("""
-            UPDATE usuarios
-            SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s
-            WHERE id=%s
-        """, (nome, email, telefone, cpf, nascimento, id))
-
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-
-        return redirect(url_for("gerenciar_clientes"))
-
-    cursor.close()
-    conexao.close()
-    return render_template("/auth/editar_cliente.html", cliente=cliente)
-
-
-#/DESATIVAR CLIENTE/#
-@app.route("/admin/desativar_cliente/<int:id>")
-@admin_required
-def desativar_cliente(id):
-    conexao = conectar()
-    cursor = conexao.cursor()
-
-    cursor.execute("UPDATE usuarios SET ativo = FALSE WHERE id = %s", (id,))
-    conexao.commit()
-
-    cursor.close()
-    conexao.close()
-
-    return redirect("/admin/visualizar_clientes")
-
-
-#/REATIVAR CLIENTE/#
-@app.route("/admin/reativar_cliente/<int:id>")
-@admin_required
-def reativar_cliente(id):
-    conexao = conectar()
-    cursor = conexao.cursor()
-
-    cursor.execute("UPDATE usuarios SET ativo = TRUE WHERE id = %s", (id,))
-    conexao.commit()
-
-    cursor.close()
-    conexao.close()
-
-    return redirect("/admin/visualizar_clientes")
-
-# ==================== CARRINHO E CHECKOUT ====================
-
-@app.route("/api/carrinho", methods=['GET'])
-def get_carrinho():
-    return jsonify({"message": "Carrinho gerenciado no frontend"})
-
-@app.route("/api/carrinho/add", methods=['POST'])
-def add_to_carrinho():
-    if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 400
     
-    data = request.get_json()
+    sql = """
+        SELECT 
+            v.id as venda_id,
+            v.data_venda,
+            u.nome_completo as cliente,
+            u.email,
+            u.cpf,
+            v.valor_total,
+            v.subtotal,
+            v.valor_frete,
+            v.forma_pagamento,
+            v.status,
+            v.cpf_cnpj_nota,
+            COUNT(iv.id) as quantidade_itens
+        FROM vendas v
+        LEFT JOIN usuarios u ON v.usuario_id = u.id
+        LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+        WHERE 1=1
+    """
+    params = []
     
-    required_fields = ['produto_id', 'nome', 'preco']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Campo obrigatório faltando: {field}"}), 400
-            
-    salvar_carrinho(data)
+    if data_inicio:
+        sql += " AND DATE(v.data_venda) >= %s"
+        params.append(data_inicio)
+    
+    if data_fim:
+        sql += " AND DATE(v.data_venda) <= %s"
+        params.append(data_fim)
+    
+    if status and status != 'todos':
+        sql += " AND v.status = %s"
+        params.append(status)
+    
+    if forma_pagamento and forma_pagamento != 'todos':
+        sql += " AND v.forma_pagamento = %s"
+        params.append(forma_pagamento)
+    
+    sql += " GROUP BY v.id ORDER BY v.data_venda"
+    
+    cursor.execute(sql, params)
+    vendas = cursor.fetchall()
+    
+    cursor.close()
+    conexao.close()
+    
+    # Criar CSV
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Cabeçalho
+    writer.writerow([
+        'ID Venda', 'Data', 'Cliente', 'Email', 'CPF', 
+        'Valor Total', 'Subtotal', 'Frete', 'Forma Pagamento', 
+        'Status', 'CPF/CNPJ NF', 'Qtd Itens'
+    ])
+    
+    # Dados
+    for venda in vendas:
+        writer.writerow([
+            venda['venda_id'],
+            venda['data_venda'].strftime('%d/%m/%Y %H:%M') if venda['data_venda'] else '',
+            venda['cliente'] or '',
+            venda['email'] or '',
+            venda['cpf'] or '',
+            f"{venda['valor_total']:.2f}",
+            f"{venda['subtotal']:.2f}",
+            f"{venda['valor_frete']:.2f}",
+            venda['forma_pagamento'] or '',
+            venda['status'] or '',
+            venda['cpf_cnpj_nota'] or '',
+            venda['quantidade_itens'] or 0
+        ])
+    
+    # Retornar arquivo CSV
+    output.seek(0)
+    
+    from flask import Response
+    
+    filename = f"relatorio_vendas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
 
-    return jsonify({
-        "success": True,
-        "message": "Produto adicionado ao carrinho",
-        "produto": data
-    })
+@app.route("/admin/relatorios/produtos")
+@admin_required
+def relatorios_produtos():
+    """Relatório de desempenho de produtos"""
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    # Produtos mais vendidos
+    cursor.execute("""
+        SELECT 
+            p.id,
+            p.nome,
+            p.preco,
+            p.categoria_id,
+            c.nome as categoria_nome,
+            COALESCE(SUM(iv.quantidade), 0) as quantidade_vendida,
+            COALESCE(SUM(iv.quantidade * iv.preco_unitario), 0) as valor_total_vendido,
+            COALESCE(AVG(iv.quantidade), 0) as media_venda,
+            COALESCE(COUNT(DISTINCT iv.venda_id), 0) as numero_vendas
+        FROM produtos p
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        LEFT JOIN itens_venda iv ON p.id = iv.produto_id
+        WHERE p.ativo = TRUE
+        GROUP BY p.id, p.nome, p.preco, p.categoria_id, c.nome
+        ORDER BY quantidade_vendida DESC
+    """)
+    produtos = cursor.fetchall()
+    
+    # Estoque atual
+    cursor.execute("""
+        SELECT 
+            p.id,
+            p.nome,
+            COALESCE(SUM(e.quantidade), 0) as estoque_total
+        FROM produtos p
+        LEFT JOIN estoque e ON p.id = e.produto_id
+        WHERE p.ativo = TRUE
+        GROUP BY p.id, p.nome
+        ORDER BY estoque_total ASC
+    """)
+    estoque = cursor.fetchall()
+    
+    # Vendas por categoria
+    cursor.execute("""
+        SELECT 
+            c.id,
+            c.nome as categoria,
+            COALESCE(SUM(iv.quantidade), 0) as quantidade_vendida,
+            COALESCE(SUM(iv.quantidade * iv.preco_unitario), 0) as valor_total,
+            COUNT(DISTINCT iv.venda_id) as numero_vendas
+        FROM categorias c
+        LEFT JOIN produtos p ON c.id = p.categoria_id
+        LEFT JOIN itens_venda iv ON p.id = iv.produto_id
+        GROUP BY c.id, c.nome
+        ORDER BY valor_total DESC
+    """)
+    categorias = cursor.fetchall()
+    
+    cursor.close()
+    conexao.close()
+    
+    return render_template("admin/relatorios_produtos.html",
+                         produtos=produtos,
+                         estoque=estoque,
+                         categorias=categorias)
 
-@app.route("/api/produto/<int:produto_id>/estoque")
-def get_estoque_produto(produto_id):
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT e.tamanho_id, e.cor_id, e.quantidade,
-                   t.nome as tamanho_nome, c.nome as cor_nome
-            FROM estoque e
-            JOIN tamanhos t ON e.tamanho_id = t.id
-            JOIN cores c ON e.cor_id = c.id
-            WHERE e.produto_id = %s AND e.quantidade > 0
-            ORDER BY t.id, c.nome
-        """, (produto_id,))
-        
-        estoque = cursor.fetchall()
-        cursor.close()
-        conexao.close()
-        
-        return jsonify({
-            "success": True,
-            "estoque": estoque
-        })
-        
-    except Exception as e:
-        print(f"Erro ao buscar estoque: {e}")
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+@app.route("/admin/relatorios/clientes")
+@admin_required
+def relatorios_clientes():
+    """Relatório de clientes"""
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+    
+    # Clientes com mais compras
+    cursor.execute("""
+        SELECT 
+            u.id,
+            u.nome_completo,
+            u.email,
+            u.data_cadastro,
+            u.ativo,
+            COUNT(v.id) as total_compras,
+            COALESCE(SUM(v.valor_total), 0) as valor_total_gasto,
+            MAX(v.data_venda) as ultima_compra
+        FROM usuarios u
+        LEFT JOIN vendas v ON u.id = v.usuario_id
+        WHERE u.is_admin = FALSE
+        GROUP BY u.id, u.nome_completo, u.email, u.data_cadastro, u.ativo
+        ORDER BY valor_total_gasto DESC
+    """)
+    clientes = cursor.fetchall()
+    
+    # Novos clientes por mês
+    cursor.execute("""
+        SELECT 
+            DATE_FORMAT(data_cadastro, '%%Y-%%m') as mes,
+            COUNT(*) as novos_clientes
+        FROM usuarios
+        WHERE data_cadastro >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+            AND is_admin = FALSE
+        GROUP BY DATE_FORMAT(data_cadastro, '%%Y-%%m')
+        ORDER BY mes DESC
+    """)
+    novos_clientes = cursor.fetchall()
+    
+    cursor.close()
+    conexao.close()
+    
+    return render_template("admin/relatorios_clientes.html",
+                         clientes=clientes,
+                         novos_clientes=novos_clientes)
 
 # ==================== ROTA PARA CRIAR ADMIN MANUALMENTE ====================
 
 @app.route("/criar-admin", methods=['GET', 'POST'])
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        print(f"[DEBUG] Verificando admin... Sessão: {dict(session)}")
+        
+        # Se não estiver logado
+        if 'usuario_id' not in session:
+            print("[DEBUG] Não está logado - redirecionando para dashboard")
+            flash('Faça login para acessar.', 'error')
+            return redirect('/dashboardmagda')
+        
+        # Verificar se é admin no banco
+        try:
+            conexao = conectar()
+            cursor = conexao.cursor(dictionary=True)
+            cursor.execute("SELECT is_admin FROM usuarios WHERE id = %s", (session['usuario_id'],))
+            usuario = cursor.fetchone()
+            cursor.close()
+            conexao.close()
+            
+            if usuario and usuario['is_admin']:
+                print(f"[DEBUG] É admin! ID: {session['usuario_id']}")
+                return f(*args, **kwargs)
+            else:
+                print(f"[DEBUG] NÃO é admin! ID: {session['usuario_id']}")
+                flash('Acesso restrito a administradores.', 'error')
+                return redirect('/dashboardmagda')
+                
+        except Exception as e:
+            print(f"[DEBUG] Erro ao verificar admin: {str(e)}")
+            flash('Erro ao verificar permissões.', 'error')
+            return redirect('/dashboardmagda')
+    
+    return decorated_function
+
 def criar_admin():
     # Esta rota só deve estar ativa durante desenvolvimento
     # Em produção, remova ou proteja com uma chave especial
@@ -1252,7 +2061,7 @@ def setup_admin():
             cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
             if cursor.fetchone():
                 flash("Este email já está cadastrado.", "error")
-                return render_template("admin/setup_admin.html")
+                return render_template("/setup_admin.html")
             
             # Criar hash da senha
             senha_hash = generate_password_hash(senha)
@@ -1286,7 +2095,13 @@ def redirecionar_rotas_antigas():
         '/estoque': '/admin/estoque',
         '/novo_produto': '/admin/novo_produto',
         '/salvar': '/admin/salvar',
-        '/visualizar_clientes': '/admin/visualizar_clientes',
+        '/editar_produto': '/admin/editar_produto',
+        '/atualizar': '/admin/atualizar',
+        '/desativar_produto': '/admin/desativar_produto',
+        '/reativar_produto': '/admin/reativar_produto',
+        '/relatorios': '/admin/relatorios',
+        '/relatorios/vendas': '/admin/relatorios/vendas',
+        '/gerenciar_usuarios': '/admin/gerenciar_usuarios',
     }
     
     if request.path in rotas_redirecionamento:
@@ -1334,270 +2149,6 @@ def inject_template_vars():
         get_usuario_nome=get_usuario_nome,
         agora=datetime.now
     )
-
-# ==================== CARRINHO E CHECKOUT ====================
-
-@app.route("/checkout", methods=['GET', 'POST'])
-@login_required
-def checkout_dados():
-    """Página de checkout com dados do usuário e carrinho"""
-    
-    # Verificar se tem carrinho na sessão
-    carrinho = session.get('carrinho', [])    
-    if not carrinho or len(carrinho) == 0:
-        flash("Seu carrinho está vazio. Adicione produtos antes de finalizar a compra.", "error")
-        return redirect('/produtos')
-    
-    # Obter usuário do banco de dados
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-    
-    # Buscar dados do usuário
-    cursor.execute("""
-        SELECT nome_completo, email, telefone, cpf
-        FROM usuarios 
-        WHERE id = %s
-    """, (session['usuario_id'],))
-    usuario = cursor.fetchone()
-    
-    cursor.close()
-    conexao.close()
-    
-    if not usuario:
-        flash("Usuário não encontrado", "error")
-        return redirect('/')
-    
-    # Separar nome e sobrenome
-    nome_completo = usuario['nome_completo'].split()
-    nome = nome_completo[0] if len(nome_completo) > 0 else ""
-    sobrenome = " ".join(nome_completo[1:]) if len(nome_completo) > 1 else ""
-    
-    # Obter CEP da sessão (se foi informado no carrinho)
-    cep = session.get('cep_frete', '')
-    endereco = None
-    
-    # Se tem CEP, buscar endereço via API
-    if cep:
-        try:
-            import requests
-            response = requests.get(f"https://viacep.com.br/ws/{cep.replace('-', '')}/json/")
-            if response.status_code == 200:
-                endereco_data = response.json()
-                if 'erro' not in endereco_data:
-                    endereco = {
-                        'logradouro': endereco_data.get('logradouro', ''),
-                        'bairro': endereco_data.get('bairro', ''),
-                        'localidade': endereco_data.get('localidade', ''),
-                        'uf': endereco_data.get('uf', '')
-                    }
-        except:
-            pass
-    
-    # Obter carrinho da sessão
-    carrinho = session.get('carrinho', [])
-    
-    # Calcular totais
-    subtotal = sum(item.get('preco', 0) * item.get('quantidade', 1) for item in carrinho)
-    frete = session.get('frete_selecionado_valor', 0)
-    total = subtotal + frete
-    
-    return render_template("/pages/checkout_dados.html",
-                         usuario={
-                             'email': usuario['email'],
-                             'nome': nome,
-                             'sobrenome': sobrenome,
-                             'telefone': usuario['telefone'],
-                             'cpf': usuario['cpf']
-                         },
-                         cep=cep,
-                         endereco=endereco,
-                         carrinho=carrinho,
-                         subtotal=subtotal,
-                         frete=frete,
-                         total=total)
-
-@app.route("/api/carrinho/info", methods=['GET'])
-@login_required
-def get_carrinho_info():
-    """API para obter informações do carrinho"""
-    carrinho = session.get('carrinho', [])
-    
-    # Calcular totais
-    subtotal = sum(item.get('preco', 0) * item.get('quantidade', 1) for item in carrinho)
-    frete = session.get('frete_selecionado_valor', 0)
-    total = subtotal + frete
-    
-    return jsonify({
-        'success': True,
-        'carrinho': carrinho,
-        'subtotal': subtotal,
-        'frete': frete,
-        'total': total
-    })
-
-@app.route("/api/salvar-frete", methods=['POST'])
-@login_required
-def salvar_frete():
-    """Salvar CEP e frete na sessão"""
-    data = request.get_json()
-    
-    if 'cep' in data:
-        session['cep_frete'] = data['cep']
-    
-    if 'frete' in data:
-        session['frete_selecionado'] = data['frete'].get('tipo', '')
-        session['frete_selecionado_valor'] = data['frete'].get('valor', 0)
-    
-    session.modified = True
-    return jsonify({'success': True})
-
-@app.route("/processar-pedido", methods=['POST'])
-@login_required
-def processar_pedido():
-    """Processar pedido final"""
-    try:
-        # Dados do formulário
-        dados = request.form
-        
-        # Obter carrinho da sessão
-        carrinho = session.get('carrinho', [])
-        if not carrinho:
-            flash("Carrinho vazio", "error")
-            return redirect('/carrinho')
-        
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-        
-        # Inserir venda
-        valor_total = sum(item.get('preco', 0) * item.get('quantidade', 1) for item in carrinho)
-        valor_total += float(dados.get('frete_selecionado_valor', 0))
-        
-        cursor.execute("""
-            INSERT INTO vendas (usuario_id, valor_total, forma_pagamento)
-            VALUES (%s, %s, %s)
-        """, (session['usuario_id'], valor_total, dados.get('forma_pagamento', 'PIX')))
-        
-        venda_id = cursor.lastrowid
-        
-        # Inserir endereço da venda
-        cursor.execute("""
-            INSERT INTO enderecos_venda 
-            (venda_id, cep, logradouro, numero, complemento, bairro, cidade, estado, destinatario)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            venda_id,
-            dados.get('cep'),
-            dados.get('rua'),
-            dados.get('numero'),
-            dados.get('complemento'),
-            dados.get('bairro'),
-            dados.get('cidade'),
-            dados.get('estado'),
-            f"{dados.get('nome')} {dados.get('sobrenome')}"
-        ))
-        
-        # Inserir itens da venda
-        for item in carrinho:
-            cursor.execute("""
-                INSERT INTO itens_venda 
-                (venda_id, produto_id, tamanho_id, cor_id, quantidade, preco_unitario)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (
-                venda_id,
-                item.get('id'),
-                item.get('tamanho_id'),
-                item.get('cor_id'),
-                item.get('quantidade', 1),
-                item.get('preco', 0)
-            ))
-            
-            # Atualizar estoque (se necessário)
-            cursor.execute("""
-                UPDATE estoque 
-                SET quantidade = quantidade - %s
-                WHERE produto_id = %s AND tamanho_id = %s AND cor_id = %s
-            """, (
-                item.get('quantidade', 1),
-                item.get('id'),
-                item.get('tamanho_id'),
-                item.get('cor_id')
-            ))
-        
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-        
-        # Limpar carrinho da sessão
-        session.pop('carrinho', None)
-        session.pop('cep_frete', None)
-        session.pop('frete_selecionado', None)
-        session.pop('frete_selecionado_valor', None)
-        session.modified = True
-        
-        flash("Pedido realizado com sucesso!", "success")
-        return redirect('/usuario')
-        
-    except Exception as e:
-        print(f"Erro ao processar pedido: {e}")
-        flash(f"Erro ao processar pedido: {str(e)}", "error")
-        return redirect('/checkout')
-
-@app.route("/pagamento")
-def checkout_pagamento():
-
-    return render_template("/pages/checkout_pagamento.html")
-
-def salvar_carrinho(data):
-    """Salvar carrinho na sessão do servidor"""
-    
-    if 'carrinho' in data:
-        # Limpar IDs antigos para evitar duplicação
-        novo_carrinho = []
-        
-        for item in data['carrinho']:
-            # Garantir que o item tem todas as propriedades necessárias
-            item_limpo = {
-                'id': item.get('id'),
-                'nome': item.get('nome', 'Produto sem nome'),
-                'preco': float(item.get('preco', 0)),
-                'imagem': item.get('imagem', '/static/images/default.png'),
-                'tamanho': item.get('tamanho'),
-                'cor': item.get('cor'),
-                'quantidade': int(item.get('quantidade', 1)),
-                'tamanho_id': item.get('tamanho_id') or 1,  # Valor padrão
-                'cor_id': item.get('cor_id') or 1  # Valor padrão
-            }
-            novo_carrinho.append(item_limpo)
-        
-        session['carrinho'] = novo_carrinho
-        session.modified = True
-    
-    return jsonify({'success': True})
-
-@app.route("/api/carregar-carrinho", methods=['GET'])
-@login_required
-def carregar_carrinho():
-    """Carregar carrinho da sessão do servidor"""
-    carrinho = session.get('carrinho', [])
-    
-    # Se não tem carrinho na sessão, tentar criar um vazio
-    if not carrinho:
-        session['carrinho'] = []
-        carrinho = []
-    
-    return jsonify({
-        'success': True,
-        'carrinho': carrinho
-    })
-
-@app.route("/api/limpar-carrinho", methods=['POST'])
-@login_required
-def limpar_carrinho():
-    """Limpar carrinho da sessão"""
-    session.pop('carrinho', None)
-    session.modified = True
-    return jsonify({'success': True})
-
     
 # ==================== TEMPLATE FILTERS ====================
 
@@ -1610,6 +2161,204 @@ def formatar_data(data):
 @app.template_filter('formatar_moeda')
 def formatar_moeda(valor):
     return f"R$ {float(valor):.2f}".replace('.', ',')
+
+# ==================== ROTA DE GERENCIAMENTO DE USUÁRIOS ====================
+#/GERENCIAR CLIENTES/#
+@app.route("/admin/gerenciar_clientes")
+@admin_required
+def gerenciar_clientes():
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            id,
+            nome_completo,
+            email,
+            telefone,
+            cpf,
+            nascimento,
+            data_cadastro,
+            ativo
+        FROM usuarios
+        ORDER BY data_cadastro DESC
+    """)
+    
+    clientes = cursor.fetchall()
+
+    cursor.close()
+    conexao.close() 
+
+    return render_template("/auth/gerenciar_clientes.html", clientes=clientes)
+
+@app.route("/admin/editar_cliente/<int:id>", methods=["GET", "POST"])
+@admin_required
+def editar_cliente(id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Buscar cliente
+    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
+    cliente = cursor.fetchone()
+
+    if not cliente:
+        flash("Cliente não encontrado!", "erro")
+        return redirect(url_for("gerenciar_clientes"))
+
+    if request.method == "POST":
+        nome = request.form["nome_completo"]
+        email = request.form["email"]
+        telefone = request.form["telefone"]
+        cpf = request.form["cpf"]
+        nascimento = request.form["nascimento"]
+        senha = request.form.get("senha", "").strip()
+
+        # Atualização SEM senha
+        if senha == "":
+            cursor.execute("""
+                UPDATE usuarios
+                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s
+                WHERE id=%s
+            """, (nome, email, telefone, cpf, nascimento, id))
+
+        # Atualização COM senha
+        else:
+            senha_hash = generate_password_hash(senha)
+
+            cursor.execute("""
+                UPDATE usuarios
+                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s, senha_hash=%s
+                WHERE id=%s
+            """, (nome, email, telefone, cpf, nascimento, senha_hash, id))
+
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+
+        flash("Cliente atualizado com sucesso!", "sucesso")
+        return redirect(url_for("gerenciar_clientes"))
+
+    cursor.close()
+    conexao.close()
+
+    return render_template("auth/editar_cliente.html", cliente=cliente)
+
+@app.route("/editar_usuario/<int:id>", methods=["GET", "POST"])
+def editar_usuario(id):
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Buscar cliente
+    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
+    cliente = cursor.fetchone()
+
+    if not cliente:
+        flash("Cliente não encontrado!", "erro")
+        return redirect("/")
+
+    if request.method == "POST":
+        nome = request.form["nome_completo"]
+        email = request.form["email"]
+        telefone = request.form["telefone"]
+        cpf = request.form["cpf"]
+        nascimento = request.form["nascimento"]
+        senha = request.form.get("senha", "").strip()
+
+        # Atualização SEM senha
+        if senha == "":
+            cursor.execute("""
+                UPDATE usuarios
+                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s
+                WHERE id=%s
+            """, (nome, email, telefone, cpf, nascimento, id))
+
+        # Atualização COM senha
+        else:
+            senha_hash = generate_password_hash(senha)
+
+            cursor.execute("""
+                UPDATE usuarios
+                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s, senha_hash=%s
+                WHERE id=%s
+            """, (nome, email, telefone, cpf, nascimento, senha_hash, id))
+
+        conexao.commit()
+        cursor.close()
+        conexao.close()
+
+        flash("Usuário atualizado com sucesso!", "sucesso")
+        return redirect("/usuario")
+
+    cursor.close()
+    conexao.close()
+
+    return render_template("auth/editar_usuario.html", cliente=cliente)
+
+#/DESATIVAR USUARIO/
+@app.route("/admin/desativar_usuario/<int:id>")
+@admin_required
+def desativar_usuario(id):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("UPDATE usuarios SET ativo = FALSE WHERE id = %s", (id,))
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    flash("Usuário desativado!", "aviso")
+    return redirect(url_for("gerenciar_clientes"))
+
+#/ATIVAR USUARIO/
+@app.route("/admin/ativar_usuario/<int:id>")
+@admin_required
+def ativar_usuario(id):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("UPDATE usuarios SET ativo = TRUE WHERE id = %s", (id,))
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    flash("Usuário ativado!", "sucesso")
+    return redirect(url_for("gerenciar_clientes"))
+
+    
+# Teste a query isoladamente
+@app.route("/teste_query")
+def teste_query():
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+        
+        # Teste cada parte da query
+        print("Testando query básica...")
+        cursor.execute("SELECT * FROM usuarios LIMIT 3")
+        usuarios = cursor.fetchall()
+        
+        print("Testando query com LEFT JOIN...")
+        cursor.execute("""
+            SELECT u.id, u.nome_completo, COUNT(v.id) as total_vendas
+            FROM usuarios u
+            LEFT JOIN vendas v ON u.id = v.usuario_id
+            GROUP BY u.id
+            LIMIT 3
+        """)
+        usuarios_compras = cursor.fetchall()
+        
+        cursor.close()
+        conexao.close()
+        
+        return jsonify({
+            "query_basica": usuarios,
+            "query_compras": usuarios_compras
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

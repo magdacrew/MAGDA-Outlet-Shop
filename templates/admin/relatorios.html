@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios de Venda - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="relatorios-vendas-page">
+
+    {% include 'layouts/navbar.html' %}
+
+<div class="relatorios-page">
+    <div class="relatorios-wrapper">
+        <div class="relatorios-container">
+            <h1 class="relatorios-title">📊 Relatórios</h1>
+            
+            <div class="relatorios-grid">
+                <!-- Card Vendas -->
+                <a href="{{ url_for('relatorios_vendas') }}" class="relatorio-card">
+                    <div class="relatorio-icon">💰</div>
+                    <h3>Vendas</h3>
+                    <p>Relatório detalhado de vendas, filtros por data, status e pagamento</p>
+                    <div class="relatorio-stats">
+                        <span>Exportar CSV</span>
+                        <span>Gráficos</span>
+                    </div>
+                </a>
+                
+                <!-- Card Produtos -->
+                <a href="{{ url_for('relatorios_produtos') }}" class="relatorio-card">
+                    <div class="relatorio-icon">📦</div>
+                    <h3>Produtos</h3>
+                    <p>Desempenho por produto, estoque, categorias mais vendidas</p>
+                    <div class="relatorio-stats">
+                        <span>Top 10</span>
+                        <span>Estoque</span>
+                    </div>
+                </a>
+                
+                <!-- Card Clientes -->
+                <a href="{{ url_for('relatorios_clientes') }}" class="relatorio-card">
+                    <div class="relatorio-icon">👥</div>
+                    <h3>Clientes</h3>
+                    <p>Clientes mais valiosos, frequência de compra, novos clientes</p>
+                    <div class="relatorio-stats">
+                        <span>Fidelidade</span>
+                        <span>Novos</span>
+                    </div>
+                </a>
+                
+            </div>
+            
+            <div class="relatorios-actions">
+                <h2>Ações Rápidas</h2>
+                <div class="actions-buttons">
+                    <a href="{{ url_for('exportar_vendas') }}?export=all" class="action-btn">
+                        <span>📥</span>
+                        Exportar Todas Vendas
+                    </a>
+                    <a href="{{ url_for('dashboardmagda') }}" class="action-btn">
+                        <span>📈</span>
+                        Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.relatorios-page {
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.relatorios-wrapper {
+    padding-top: 130px;
+    padding-bottom: 60px;
+}
+
+.relatorios-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.relatorios-title {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    color: #111;
+    text-align: center;
+}
+
+.relatorios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.relatorio-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.relatorio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #000;
+}
+
+.relatorio-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.relatorio-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #111;
+}
+
+.relatorio-card p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.relatorio-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.relatorio-stats span {
+    background: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.relatorios-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.relatorios-actions h2 {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    color: #111;
+    text-align: center;
+}
+
+.actions-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 25px;
+    background: #000;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.action-btn span {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .relatorios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-buttons {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        justify-content: center;
+    }
+}
+</style>
+<div class="footer-spacer">
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</div>
+
+</body>

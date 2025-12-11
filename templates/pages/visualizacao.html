@@ -38,8 +38,7 @@
             <div class="produto-descricao">
                 <p>{{ produto.descricao }}</p>
             </div>
-            
-            <form class="produto-opcoes" id="form-produto">
+            <form method="POST" action="/adicionar_carrinho/{{ produto.id }}" enctype="multipart/form-data" class="np-card">         
                 <div class="opcao-grupo">
                     <label for="tamanho">Tamanho:</label>
                     <select name="tamanho_id" id="tamanho" required>
@@ -61,42 +60,36 @@
                     <label for="quantidade">Quantidade:</label>
                     <div class="quantidade-selector">
                         <button type="button" class="quantidade-btn" id="diminuir">-</button>
-                        <input type="number" id="quantidade" name="quantidade" value="1" min="1">
+                        <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="10">
                         <button type="button" class="quantidade-btn" id="aumentar">+</button>
                     </div>
                 </div>
                 
-                    <!-- No formulário, mude o botão -->
-                    <div class="produto-acoes">
-                        <button type="button" class="btn-adicionar-carrinho" 
-                                data-produto-id="{{ produto.id }}">
-                            ADICIONAR AO CARRINHO
-                        </button>
-                    </div>
+                <div class="produto-acoes">
+                    <button type="submit" class="btn-adicionar-carrinho">ADICIONAR AO CARRINHO</button>
+                </div>
+            </form>
+            
+            <div class="produto-detalhes-adicionais">
+                <div class="detalhe-item">
+                    <h3>Descrição Detalhada</h3>
+                    <p>{{ produto.descricao_detalhada or 'Detalhes adicionais sobre o produto.' }}</p>
+                </div>
+                
+                <div class="detalhe-item">
+                    <h3>Informações de Envio</h3>
+                    <p>Frete grátis para Joinville em compras acima de R$ 599,90. Entrega em até 5 dias úteis.</p>
+                </div>
+                
+                <div class="detalhe-item">
+                    <h3>Formas de Pagamento</h3>
+                    <p>Cartão de crédito (até 3x sem juros), PIX (5% de desconto) e boleto bancário.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <!-- E também nos produtos relacionados -->
-                    {% for produto_relacionado in produtos_relacionados %}
-                    <div class="card" data-produto-id="{{ produto_relacionado.id }}">
-                        <a href="/visualizacao/{{ produto_relacionado.id }}">  <!-- Corrigido -->
-                            <img src="{{ url_for('static', filename='uploads/' ~ produto_relacionado.imagem) if produto_relacionado.imagem else url_for('static', filename='images/default.png') }}"
-                                alt="{{ produto_relacionado.nome }}">
-                        </a>
-                        <div class="produto-nome">{{ produto_relacionado.nome }}</div>
-                        <div class="produto-preco">
-                            R$ {{ "%.2f"|format(produto_relacionado.preco) }}
-                        </div>
-                        <button type="button" class="btn-adicionar-card" 
-                                data-produto-id="{{ produto_relacionado.id }}">
-                            ADICIONAR AO CARRINHO
-                        </button>
-                    </div>
-                    {% endfor %}
-                                </div>
-                            </div>
-                        </section>
-
-    <!-- CORREÇÃO: Div fechada corretamente -->
-    <div>
+    <div class="footer-spacer">
         {% include 'layouts/footer.html' %}
     </div>
 

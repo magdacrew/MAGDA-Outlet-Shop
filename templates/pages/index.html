@@ -67,14 +67,14 @@
                         <div class="carrossel-item">
                             <div class="card">
                                 <a href="/visualizacao/{{produto.id}}">
-                                <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
-                                    alt="{{ produto.nome }}">
+                                    <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}" alt="{{ produto.nome }}">
                                 </a>
-                                <div class="produto-nome">{{ produto.nome }}</div>
+                                <div class="produto-nome">
+                                    {{ produto.nome }}
+                                </div>
                                 <div class="produto-preco">
                                     R$ {{ "%.2f"|format(produto.preco) }}
                                 </div>
-                                <button class="btn-comprar">ADICIONAR AO CARRINHO</button>
                             </div>
                         </div>
                         {% endfor %}
@@ -105,9 +105,6 @@
             </div>
         </div>
     </section>
-    
-    <!-- FOOTER -->
-    {% include 'layouts/footer.html' %}
 
 <script>
 // JavaScript para funcionalidade do carrossel
@@ -260,6 +257,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+    <!-- FOOTER -->
+    {% include 'layouts/footer.html' %}
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 

@@ -104,9 +104,6 @@
                 </a>
                 <div class="produto-nome">{{ produto.nome }}</div>
                 <div class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</div>
-                <button class="btn-comprar" onclick="abrirModalProduto({{ produto.id }})">
-                    ADICIONAR AO CARRINHO
-                </button>
             </div>
             {% endfor %}
         </div>
@@ -154,8 +151,11 @@
                     </div>
                     
                     <div class="modal-produto-acoes">
-                        <button class="btn-adicionar-modal" id="modal-adicionar">
-                            ADICIONAR AO CARRINHO
+                            <button class="btn-adicionar-carrinho" id="carrinh-adicionar">
+                                ADICIONAR AO CARRINHO
+                            </button>
+                        <button class="btn-comprar-modal" id="modal-comprar">
+                            COMPRAR AGORA
                         </button>
                     </div>
                 </div>

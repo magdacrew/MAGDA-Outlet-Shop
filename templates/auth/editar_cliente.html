@@ -5,61 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Cliente • MAGDA</title>
 
-    <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-
-    <link rel="icon" href="{{ url_for('static', filename='images/simple_magda_logo.png') }}" type="image/png">
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
 </head>
-
-<body class="pagina-editar-cliente">
-
+<body>
     <!-- NAVBAR -->
     {% include 'layouts/navbar.html' %}
 
-    <main class="editar-wrapper">
+<div class="editar-cliente-container">
 
-        <h1 class="titulo-editar">Editar Cliente</h1>
+    <h2>Editar Usuário</h2>
 
-        <form action="{{ url_for('editar_cliente', id=cliente.id) }}" method="POST" class="form-editar">
+    <form method="POST" class="form-editar-cliente">
 
-            <div class="coluna">
-                <div class="form-group">
-                    <label for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" value="{{ cliente.nome_completo }}" required>
-                </div>
+        <label>Nome Completo</label>
+        <input type="text" name="nome_completo" value="{{ cliente.nome_completo }}" required>
 
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" value="{{ cliente.email }}" required>
-                </div>
+        <label>Email</label>
+        <input type="email" name="email" value="{{ cliente.email }}" required>
 
-                <div class="form-group">
-                    <label for="telefone">Telefone</label>
-                    <input type="text" id="telefone" name="telefone" value="{{ cliente.telefone }}" required>
-                </div>
-            </div>
+        <label>Telefone</label>                                                         
+        <input type="text" name="telefone" value="{{ cliente.telefone }}">
 
-            <div class="coluna">
-                <div class="form-group">
-                    <label for="cpf">CPF</label>
-                    <input type="text" id="cpf" name="cpf" value="{{ cliente.cpf }}" required>
-                </div>
+        <label>CPF</label>
+        <input type="text" name="cpf" value="{{ cliente.cpf }}">
 
-                <div class="form-group">
-                    <label for="nascimento">Data de Nascimento</label>
-                    <input type="date" id="nascimento" name="nascimento" value="{{ cliente.nascimento }}" required>
-                </div>
-            </div>
+        <label>Senha</label>
+        <input type="password" name="senha" placeholder="Deixe em branco para manter a senha atual">
 
-            <button class="btn-salvar" type="submit">Salvar Alterações</button>
-        </form>
+        <label>Data de Nascimento</label>
+        <input type="date" name="nascimento" value="{{ cliente.nascimento }}" required>
 
-        <a class="btn-voltar" href="/admin/visualizar_clientes">← Voltar</a>
+        <button type="submit" class="btn-salvar">Salvar Alterações</button>
 
-    </main>
+        <a href="{{ url_for('gerenciar_clientes') }}" class="btn-voltar">Voltar</a>
 
-    <!-- FOOTER -->
-    {% include 'layouts/footer.html' %}
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </form>
+
+</div>
+
+{% include 'layouts/footer.html' %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>

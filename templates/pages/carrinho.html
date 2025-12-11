@@ -1,11 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> CARRINHO </title>
+    <title>Carrinho - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
 </head>
-<body>
-    
+<body class="carrinho-page">
+    <!-- Incluir Navbar -->
+    {% include 'layouts/navbar.html' %}
+
+    <div class="carrinho-wrapper">
+        <div class="carrinho-container">
+            <h1 class="carrinho-title">Meu Carrinho</h1>
+            
+            {% if itens_carrinho %}
+            <div class="carrinho-content">
+                <div class="carrinho-itens">
+                    {% for item in itens_carrinho %}
+                    <div class="carrinho-item">
+                        <div class="item-imagem">
+                            {% if item.imagem %}
+                            <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" alt="{{ item.nome }}">
+                            {% else %}
+                            <div class="sem-imagem">📦</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="item-info">
+                            <h3>{{ item.nome }}</h3>
+                            {% if item.tamanho or item.cor %}
+                            <p class="item-variacoes">
+                                {% if item.tamanho %}Tamanho: {{ item.tamanho }}{% endif %}
+                                {% if item.cor %} | Cor: {{ item.cor }}{% endif %}
+                            </p>
+                            {% endif %}
+                            
+                            <div class="item-preco">
+                                R$ {{ "%.2f"|format(item.preco) }}
+                            </div>
+                        </div>
+                        
+                        <div class="item-quantidade">
+                            <form action="{{ url_for('atualizar_carrinho', item_id=item.id) }}" method="POST" class="quantidade-form">
+                                <button type="button" class="qtd-btn minus">-</button>
+                                <input type="number" name="quantidade" value="{{ item.quantidade }}" min="1" class="qtd-input">
+                                <button type="button" class="qtd-btn plus">+</button>
+                                <button type="submit" class="btn-atualizar">Atualizar</button>
+                            </form>
+                        </div>
+                        
+                        <div class="item-subtotal">
+                            R$ {{ "%.2f"|format(item.subtotal) }}
+                        </div>
+                        
+                        <div class="item-remover">
+                            <a href="{{ url_for('remover_carrinho', item_id=item.id) }}" class="btn-remover">🗑️</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="carrinho-resumo">
+                    <h2>Resumo do Pedido</h2>
+                    
+                    <div class="resumo-linha">
+                        <span>Subtotal:</span>
+                        <span>R$ {{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    
+                    <div class="resumo-linha">
+                        <span>Frete:</span>
+                        <span class="frete-gratis">Grátis ✓</span>
+                    </div>
+                    
+                    <div class="resumo-total">
+                        <span>Total:</span>
+                        <span class="total-valor">R$ {{ "%.2f"|format(total) }}</span>
+                    </div>
+                    
+                    <a href="/checkout" class="btn-finalizar">
+                        Finalizar Compra →
+                    </a>
+                    
+                    <a href="/produtos" class="btn-continuar">
+                        Continuar Comprando
+                    </a>
+                </div>
+            </div>
+            
+            {% else %}
+            <div class="carrinho-vazio">
+                <div class="vazio-icon">🛒</div>
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos incríveis da MAGDA!</p>
+                <a href="/produtos" class="btn-explorar">Explorar Produtos</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Controles de quantidade
+        document.querySelectorAll('.qtd-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const form = this.closest('.quantidade-form');
+                const input = form.querySelector('.qtd-input');
+                let value = parseInt(input.value);
+                
+                if (this.classList.contains('plus')) {
+                    input.value = value + 1;
+                } else if (this.classList.contains('minus') && value > 1) {
+                    input.value = value - 1;
+                }
+            });
+        });
+        
+        // Enviar form ao mudar quantidade
+        document.querySelectorAll('.qtd-input').forEach(input => {
+            input.addEventListener('change', function() {
+                this.closest('form').submit();
+            });
+        });
+    </script>
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
