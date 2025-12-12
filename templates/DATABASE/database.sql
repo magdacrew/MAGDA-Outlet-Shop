@@ -135,77 +135,8 @@ CREATE TABLE carrinho (
     FOREIGN KEY (cor_id) REFERENCES cores(id)
 );
 
-<<<<<<< HEAD
--- Inserção de calças na tabela produtos
-INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque) VALUES
-('Calça Jeans STONER', 
-'A Calça Jeans STONER combina conforto e estilo com sua modelagem ampla e lavagem cinza estonada. Feita em jeans 100% algodão, possui zíper YKK, costura reforçada e detalhes personalizados que garantem durabilidade e um visual street autêntico. Ideal para quem busca um caimento solto e cheio de personalidade.', 
-359.90, 
-(SELECT id FROM categorias WHERE nome = 'Calcas'), 
-'Calça_Jeans_STONER.webp', 
-TRUE), 
 
-('Storm Grey Baggy Jeans', 
-'A Storm Grey Baggy Jeans combina conforto e estilo com sua modelagem ampla e lavagem cinza estonada. Feita em jeans 100% algodão, possui zíper YKK, costura reforçada e detalhes personalizados que garantem durabilidade e um visual street autêntico. Ideal para quem busca um caimento solto e cheio de personalidade.', 
-329.90, 
-(SELECT id FROM categorias WHERE nome = 'Calcas'), 
-'Storm_Grey_Baggy_Jeans.webp', 
-TRUE),
 
-('Prime Baggy Jeans', 
-'A Prime Baggy Jeans azul claro combina um visual moderno com conforto absoluto. Com seu caimento solto e lavagem suave, ela entrega estilo urbano e versatilidade para qualquer ocasião, garantindo um look despojado e cheio de personalidade.', 
-339.90, 
-(SELECT id FROM categorias WHERE nome = 'Calcas'), 
-'Prime_Baggy_Jeans.webp', 
-TRUE),
-
-('Stone Black ECO', 
-'A Stone Black ECO traz um jeans preto estonado com visual moderno e sustentável, caimento confortável e estilo versátil para qualquer combinação.', 
-279.90, 
-(SELECT id FROM categorias WHERE nome = 'Calcas'), 
-'Stone_Black_ECO.webp', 
-TRUE),
-
-('Black Baggy Jeans', 
-'A Black Baggy Jeans oferece caimento amplo, conforto de sobra e o visual preto clássico que combina com tudo, trazendo estilo urbano na medida certa.', 
-389.90, 
-(SELECT id FROM categorias WHERE nome = 'Calcas'), 
-'Black_Baggy_Jeans.webp', 
-TRUE),
-
--- Inserção de camisas na tabela produtos
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
-
-('Horse Index Heavy Tee', 
-'A Horse Index Heavy Tee é confeccionada em Suedine preto, um tecido nobre, de textura aveludada e toque macio, com experiência de uso confortável e caimento estruturado.', 
-189.90, 
-(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
-'Horse_Index_Heavy_Tee.webp', 
-TRUE),
-
-<<<<<<< HEAD
-('Memories 2.0® Boxy Tee', 
-'A Memories 2.0® Boxy Tee Vermelha traz o caimento amplo perfeito, tecido macio e visual minimalista que destaca qualquer look. Uma peça versátil, confortável e com aquele toque street na medida certa.', 
-179.90, 
-(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
-'Memories_2.0_Boxy_Tee.webp', 
-TRUE),
-
-('Camiseta Class Pipa Preto', 
-'A Camiseta Class Pipa Preto une estilo minimalista e conforto, trazendo o clássico logo Pipa em destaque sobre o tecido preto. Versátil e moderna, é perfeita para compor looks casuais com personalidade.', 
-209.90, 
-(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
-'Camiseta_Class_Pipa_Preto.webp', 
-TRUE),
-
-('Camiseta ASHWALKER', 
-'A Camiseta ASHWALKER une estética urbana e atitude obscura, com caimento confortável e visual marcante que eleva qualquer composição streetwear.', 
-219.90, 
-(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
-'Camiseta_ASHWALKER.webp', 
-TRUE),
-=======
 -- 1) INSERIR PRODUTO
 INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
 VALUES (
@@ -278,4 +209,53 @@ VALUES
 (@produto_id, 3, 5, 10);   -- M, Cinza, 8 unidades
 (@produto_id, 4, 5, 10);   -- G,
 (@produto_id, 5, 5, 10);   -- G,
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
+
+
+
+-- 1) INSERIR PRODUTO
+INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
+VALUES (
+    'Signature Black Jorts',A 
+    'O Signature Black Jorts é uma bermuda confeccionada em jeans de alta durabilidade. A peça tem arte em laser na parte traseira que traz uma estética única pra peça. Com modelagem ampla e exclusiva, proporciona além de conforto, um caimento fluído ao corpo.',
+    249.90,          -- preço
+    4,             -- categoria_id 
+    'Signature_Black_Jorts.webp',  -- nome do arquivo
+    FALSE          -- destaque (TRUE/FALSE)
+);
+
+-- 2) PEGAR ID DO PRODUTO
+SET @produto_id = LAST_INSERT_ID();
+
+-- 3) INSERIR ESTOQUE (repita quantas variações quiser)
+INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
+VALUES
+(@produto_id, 1, 4, 10),  -- PP, Preto, 10 unidades
+(@produto_id, 2, 4, 10),  -- P, Preto, 15 unidades
+(@produto_id, 3, 4, 10);   -- M, Cinza, 8 unidades
+(@produto_id, 4, 4, 10);   -- G,
+(@produto_id, 5, 4, 10);   -- G,
+
+
+
+-- 1) INSERIR PRODUTO
+INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
+VALUES (
+    'Memories 2.0 Boxy Tee',A 
+    'A Memories 2.0® Boxy Tee Vermelha traz o caimento amplo perfeito, tecido macio e visual minimalista que destaca qualquer look. Uma peça versátil, confortável e com aquele toque street na medida certa.',
+    189.90,          -- preço
+    1 ,             -- categoria_id 
+    'Memories_2.0_Boxy_Tee.webp',  -- nome do arquivo
+    FALSE          -- destaque (TRUE/FALSE)
+);
+
+-- 2) PEGAR ID DO PRODUTO
+SET @produto_id = LAST_INSERT_ID();
+
+-- 3) INSERIR ESTOQUE (repita quantas variações quiser)
+INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
+VALUES
+(@produto_id, 1, 4, 10),  -- PP, Preto, 10 unidades
+(@produto_id, 2, 4, 10),  -- P, Preto, 15 unidades
+(@produto_id, 3, 4, 10);   -- M, Cinza, 8 unidades
+(@produto_id, 4, 4, 10);   -- G,
+(@produto_id, 5, 4, 10);   -- G,

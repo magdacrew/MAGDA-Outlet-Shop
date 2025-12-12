@@ -15,12 +15,9 @@ app.secret_key = 'MAGDA_GAE'
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-<<<<<<< HEAD
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
 
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 # Configurações de sessão
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_COOKIE_SECURE'] = False  # True em produção com HTTPS
@@ -473,16 +470,7 @@ def usuario():
             WHERE id = %s
         """, (session["usuario_id"],))
 
-        cursor.execute("""
-            SELECT i.*, p.nome, p.imagem, p.preco,
-                (i.quantidade * p.preco) as subtotal
-            FROM itens_venda i
-            JOIN produtos p ON c.produto_id = p.id
-            WHERE c.usuario_id = %s AND p.ativo = TRUE
-            ORDER BY c.data_adicao DESC
-        """, (session['usuario_id'],))
-
-        it = cursor.fetchone()
+        usuario = cursor.fetchone()
 
         cursor.close()
         conexao.close()
@@ -913,11 +901,7 @@ def finalizar_compra():
         conexao.close()
         
         # Redirecionar para página de confirmação
-<<<<<<< HEAD
         return redirect(f"/")
-=======
-        return redirect(f"/confirmacao.html/{venda_id}")
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
         
 
         
@@ -2198,12 +2182,7 @@ def gerenciar_clientes():
 
     return render_template("/auth/gerenciar_clientes.html", clientes=clientes)
 
-<<<<<<< HEAD
-@app.route("/admin/editar_cliente/<int:id>", methods=["GET", "POST"])
-@admin_required
-=======
 @app.route("/editar_cliente/<int:id>", methods=["GET", "POST"])
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 def editar_cliente(id):
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
@@ -2254,60 +2233,6 @@ def editar_cliente(id):
 
     return render_template("auth/editar_cliente.html", cliente=cliente)
 
-<<<<<<< HEAD
-@app.route("/editar_usuario/<int:id>", methods=["GET", "POST"])
-def editar_usuario(id):
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-
-    # Buscar cliente
-    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
-    cliente = cursor.fetchone()
-
-    if not cliente:
-        flash("Cliente não encontrado!", "erro")
-        return redirect("/")
-
-    if request.method == "POST":
-        nome = request.form["nome_completo"]
-        email = request.form["email"]
-        telefone = request.form["telefone"]
-        cpf = request.form["cpf"]
-        nascimento = request.form["nascimento"]
-        senha = request.form.get("senha", "").strip()
-
-        # Atualização SEM senha
-        if senha == "":
-            cursor.execute("""
-                UPDATE usuarios
-                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s
-                WHERE id=%s
-            """, (nome, email, telefone, cpf, nascimento, id))
-
-        # Atualização COM senha
-        else:
-            senha_hash = generate_password_hash(senha)
-
-            cursor.execute("""
-                UPDATE usuarios
-                SET nome_completo=%s, email=%s, telefone=%s, cpf=%s, nascimento=%s, senha_hash=%s
-                WHERE id=%s
-            """, (nome, email, telefone, cpf, nascimento, senha_hash, id))
-
-        conexao.commit()
-        cursor.close()
-        conexao.close()
-
-        flash("Usuário atualizado com sucesso!", "sucesso")
-        return redirect("/usuario")
-
-    cursor.close()
-    conexao.close()
-
-    return render_template("auth/editar_usuario.html", cliente=cliente)
-
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 #/DESATIVAR USUARIO/
 @app.route("/admin/desativar_usuario/<int:id>")
 @admin_required

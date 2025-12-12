@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Produto • MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="ep-editar-produto">
+
+    {% include 'layouts/navbar.html' %}
+
+    <div class="container">
+
+        <h1>Adicionar novo produto</h1>
+
+        <form method="POST" action="/admin/salvar" enctype="multipart/form-data">
+
+            <!-- Nome -->
+            <label>Nome do produto</label>
+            <input type="text" name="nome" required>
+
+            <!-- Descrição -->
+            <label>Descrição</label>
+            <input type="text" name="descricao" required>
+
+            <!-- Preço -->
+            <label>Preço</label>
+            <input type="number" name="preco" step="0.01" required>
+
+            <!-- Categoria -->
+            <label>Categoria</label>
+            <select name="categoria_id" required>
+                <option value="" disabled selected>Selecione...</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Imagem -->
+            <label>Imagem</label>
+            <input type="file" name="imagem" accept="image/*">
+
+            <!-- Destaque -->
+            <label>Destaque</label>
+            <select name="destaque" required>
+                <option value="" disabled selected>Selecione...</option>
+                <option value="TRUE">Sim</option>
+                <option value="FALSE">Não</option>
+            </select>
+
+            <!-- Subtítulo -->
+            <h1>Adicionar ao Estoque</h1>
+
+            <!-- VARIAÇÕES -->
+            <div id="variacoes-container">
+
+                <div class="variacao-item">
+                    <label>Tamanho</label>
+                    <select name="tamanho_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
+                        {% for tamanho in tamanhos %}
+                            <option value="{{ tamanho.id }}">{{ tamanho.nome }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Cor</label>
+                    <select name="cor_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
+                        {% for cor in cores %}
+                            <option value="{{ cor.id }}">{{ cor.nome }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Quantidade</label>
+                    <input type="number" name="quantidade[]" required>
+
+                    <button type="button" class="btn-remover" onclick="removerVariacao(this)" disabled>Remover</button>
+                </div>
+
+            </div>
+
+            <!-- Botão adicionar variação -->
+            <button type="button" class="btn-adicionar" onclick="adicionarVariacao()">+ Adicionar Variação</button>
+
+            <!-- Botão salvar -->
+            <button type="submit">Salvar Produto</button>
+
+        </form>
+
+    </div>
+
+    {% include 'layouts/footer.html' %}
+
+    <script>
+        function adicionarVariacao() {
+            const container = document.getElementById('variacoes-container');
+            const novoItem = document.createElement('div');
+
+            novoItem.className = 'variacao-item';
+            novoItem.innerHTML = `
+                <label>Tamanho</label>
+                <select name="tamanho_id[]" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    {% for tamanho in tamanhos %}
+                        <option value="{{ tamanho.id }}">{{ tamanho.nome }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Cor</label>
+                <select name="cor_id[]" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    {% for cor in cores %}
+                        <option value="{{ cor.id }}">{{ cor.nome }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Quantidade</label>
+                <input type="number" name="quantidade[]" required>
+
+                <button type="button" class="btn-remover" onclick="removerVariacao(this)">Remover</button>
+            `;
+
+            container.appendChild(novoItem);
+            atualizarBotoesRemover();
+        }
+
+        function removerVariacao(btn) {
+            const itens = document.querySelectorAll('.variacao-item');
+            if (itens.length > 1) {
+                btn.parentNode.remove();
+                atualizarBotoesRemover();
+            }
+        }
+
+        function atualizarBotoesRemover() {
+            const botoes = document.querySelectorAll('.btn-remover');
+            const itens = document.querySelectorAll('.variacao-item');
+
+            botoes.forEach(btn => btn.disabled = itens.length === 1);
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>

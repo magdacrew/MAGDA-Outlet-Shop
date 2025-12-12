@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="ep-editar-produto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Produto - MAGDA CREW</title>
+    
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+<body>
+    {% include 'layouts/navbar.html' %}
+
+    <div class="ep-container">
+        <h1>Editar Produto</h1>
+        
+        <form method="POST" action="/atualizar/{{ produto.id }}" enctype="multipart/form-data" class="ep-form">
+            <div class="ep-group">
+                <label>Nome:</label>
+                <input type="text" name="nome" value="{{ produto.nome }}" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Descrição:</label>
+                <input type="text" name="descricao" value="{{ produto.descricao }}" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Preço:</label>
+                <input type="number" name="preco" value="{{ produto.preco }}" step="0.01" required>
+            </div>
+            
+            <div class="ep-group">
+                <label>Categoria:</label>
+                <select name="categoria_id" required>
+                    <option value="" disabled>Selecione...</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria.id == produto.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label for="destaque">Destaque:</label>
+                <select name="destaque" id="destaque" required>
+                    <option value="" disabled>Selecione uma opção</option>
+                    <option value="TRUE" {% if produto.destaque == 1 %}selected{% endif %}>Sim</option>
+                    <option value="FALSE" {% if produto.destaque == 0 %}selected{% endif %}>Não</option>
+                </select>
+            </div>
+            
+            <div class="ep-group">
+                <label>Imagem:</label>
+                <input type="file" name="imagem">
+                {% if produto.imagem %}
+                <div class="imagem-atual">
+                    <small>Imagem atual: {{ produto.imagem }}</small>
+                </div>
+                {% endif %}
+            </div>
+
+            <h2 class="ep-subtitle">Editar Estoque</h2>
+            
+            <!-- Container para múltiplas variações -->
+            <div id="variacoes-container">
+                {% for estoque in estoque_variacoes %}
+                <div class="variacao-item ep-grid">
+                    <input type="hidden" name="estoque_id[]" value="{{ estoque.estoque_id }}">
+                    
+                    <div class="ep-group">
+                        <label>Tamanho:</label>
+                        <select name="tamanho_id[]" required>
+                            <option value="" disabled>Selecione...</option>
+                            {% for tamanho in tamanhos %}
+                                <option value="{{ tamanho.id }}" {% if tamanho.id == estoque.tamanho_id %}selected{% endif %}>{{ tamanho.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="ep-group">
+                        <label>Cor:</label>
+                        <select name="cor_id[]" required>
+                            <option value="" disabled>Selecione...</option>
+                            {% for cor in cores %}
+                                <option value="{{ cor.id }}" {% if cor.id == estoque.cor_id %}selected{% endif %}>{{ cor.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="ep-group">
+                        <label>Quantidade:</label>
+                        <input type="number" name="quantidade[]" value="{{ estoque.quantidade }}" required>
+                    </div>
+                    
+                    <div class="ep-group">
+                        <label>Ações:</label>
+                        <button type="button" class="btn-remover" onclick="removerVariacao(this)" {% if estoque_variacoes|length == 1 %}disabled{% endif %}>Remover</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-adicionar" onclick="adicionarVariacao()">+ Adicionar Variação</button>
+
+            <button type="submit" class="ep-btn">Atualizar Produto</button>
+        </form>
+    </div>
+
+    {% include 'layouts/footer.html' %}
+    <script>
+        function adicionarVariacao() {
+            const container = document.getElementById('variacoes-container');
+            const novoItem = document.createElement('div');
+            novoItem.className = 'variacao-item ep-grid';
+            novoItem.innerHTML = `
+                <input type="hidden" name="estoque_id[]" value="">
+                
+                <div class="ep-group">
+                    <label>Tamanho:</label>
+                    <select name="tamanho_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
+                        {% for tamanho in tamanhos %}
+                            <option value="{{ tamanho.id }}">{{ tamanho.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="ep-group">
+                    <label>Cor:</label>
+                    <select name="cor_id[]" required>
+                        <option value="" disabled selected>Selecione...</option>
+                        {% for cor in cores %}
+                            <option value="{{ cor.id }}">{{ cor.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="ep-group">
+                    <label>Quantidade:</label>
+                    <input type="number" name="quantidade[]" value="0" required>
+                </div>
+                
+                <div class="ep-group">
+                    <label>Ações:</label>
+                    <button type="button" class="btn-remover" onclick="removerVariacao(this)">Remover</button>
+                </div>
+            `;
+            container.appendChild(novoItem);
+            atualizarBotoesRemover();
+        }
+
+        function removerVariacao(botao) {
+            const itens = document.querySelectorAll('.variacao-item');
+            if (itens.length > 1) {
+                botao.closest('.variacao-item').remove();
+                atualizarBotoesRemover();
+            }
+        }
+
+        function atualizarBotoesRemover() {
+            const botoes = document.querySelectorAll('.btn-remover');
+            const itens = document.querySelectorAll('.variacao-item');
+            
+            if (itens.length === 1) {
+                botoes[0].disabled = true;
+            } else {
+                botoes.forEach(botao => botao.disabled = false);
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

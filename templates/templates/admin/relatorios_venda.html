@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios de Venda - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="relatorios-vendas-page">
+
+    {% include 'layouts/navbar.html' %}
+
+<div class="relatorios-vendas-page">
+    <div class="relatorios-vendas-wrapper">
+        <div class="relatorios-vendas-container">
+            <div class="relatorios-header">
+                <h1>💰 Relatório de Vendas</h1>
+                <a href="/admin/relatorios" class="btn-voltar">← Voltar</a>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="filtros-card">
+                <h3>🔍 Filtros</h3>
+                <form method="GET" class="filtros-form">
+                    <div class="filtros-grid">
+                        <div class="filtro-group">
+                            <label>Data Início</label>
+                            <input type="date" name="data_inicio" value="{{ data_inicio }}">
+                        </div>
+                        <div class="filtro-group">
+                            <label>Data Fim</label>
+                            <input type="date" name="data_fim" value="{{ data_fim }}">
+                        </div>
+                        <div class="filtro-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="todos" {% if status == 'todos' %}selected{% endif %}>Todos</option>
+                                <option value="confirmado" {% if status == 'confirmado' %}selected{% endif %}>Confirmado</option>
+                                <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                                <option value="cancelado" {% if status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="filtro-group">
+                            <label>Forma Pagamento</label>
+                            <select name="forma_pagamento">
+                                <option value="todos" {% if forma_pagamento == 'todos' %}selected{% endif %}>Todas</option>
+                                <option value="cartao" {% if forma_pagamento == 'cartao' %}selected{% endif %}>Cartão</option>
+                                <option value="pix" {% if forma_pagamento == 'pix' %}selected{% endif %}>PIX</option>
+                                <option value="boleto" {% if forma_pagamento == 'boleto' %}selected{% endif %}>Boleto</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filtros-actions">
+                        <button type="submit" class="btn-aplicar">Aplicar Filtros</button>
+                        <a href="{{ url_for('relatorios_vendas') }}" class="btn-limpar">Limpar Filtros</a>
+                        <a href="{{ url_for('exportar_vendas', data_inicio=data_inicio, data_fim=data_fim, status=status, forma_pagamento=forma_pagamento) }}" 
+                           class="btn-exportar">📥 Exportar CSV</a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Estatísticas -->
+            {% if totais %}
+            <div class="estatisticas-grid">
+                <div class="estatistica-card">
+                    <div class="estatistica-icon">💰</div>
+                    <div class="estatistica-content">
+                        <h3>Total Vendido</h3>
+                        <div class="estatistica-valor">R$ {{ "%.2f"|format(totais.valor_total) }}</div>
+                    </div>
+                </div>
+                
+                <div class="estatistica-card">
+                    <div class="estatistica-icon">📦</div>
+                    <div class="estatistica-content">
+                        <h3>Total Vendas</h3>
+                        <div class="estatistica-valor">{{ totais.total_vendas }}</div>
+                    </div>
+                </div>
+                
+                <div class="estatistica-card">
+                    <div class="estatistica-icon">🚚</div>
+                    <div class="estatistica-content">
+                        <h3>Frete Total</h3>
+                        <div class="estatistica-valor">R$ {{ "%.2f"|format(totais.frete_total) }}</div>
+                    </div>
+                </div>
+                
+                <div class="estatistica-card">
+                    <div class="estatistica-icon">🎯</div>
+                    <div class="estatistica-content">
+                        <h3>Ticket Médio</h3>
+                        <div class="estatistica-valor">R$ {{ "%.2f"|format(totais.ticket_medio) }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Tabela de Vendas -->
+            <div class="vendas-card">
+                <div class="vendas-header">
+                    <h3>📋 Vendas Realizadas</h3>
+                    <span class="vendas-count">{{ vendas|length }} vendas</span>
+                </div>
+                
+                {% if vendas %}
+                <div class="vendas-table-container">
+                    <table class="vendas-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Valor Total</th>
+                                <th>Pagamento</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venda in vendas %}
+                            <tr>
+                                <td>#{{ venda.id }}</td>
+                                <td>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ venda.cliente_nome or 'N/A' }}</td>
+                                <td>R$ {{ "%.2f"|format(venda.valor_total) }}</td>
+                                <td>
+                                    <span class="badge-pagamento {{ venda.forma_pagamento }}">
+                                        {{ venda.forma_pagamento|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-status {{ venda.status }}">
+                                        {{ venda.status|title }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('detalhes_venda', venda_id=venda.id) }}" 
+                                       class="btn-detalhes">Detalhes</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="vendas-vazio">
+                    <p>📭 Nenhuma venda encontrada com os filtros aplicados</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Gráficos -->
+            {% if vendas_por_mes %}
+            <div class="graficos-grid">
+                <div class="grafico-card">
+                    <h3>📈 Vendas por Mês</h3>
+                    <div class="grafico-barras">
+                        {% for mes in vendas_por_mes %}
+                        <div class="barra-item">
+                            <div class="barra-label">{{ mes.mes }}</div>
+                            <div class="barra-container">
+                                <div class="barra" style="width: {{ (mes.valor_total / (vendas_por_mes[0].valor_total or 1)) * 100 }}%"></div>
+                            </div>
+                            <div class="barra-valor">R$ {{ "%.2f"|format(mes.valor_total) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="grafico-card">
+                    <h3>🏆 Top Produtos</h3>
+                    <div class="top-produtos-list">
+                        {% for produto in top_produtos[:5] %}
+                        <div class="produto-item">
+                            <div class="produto-nome">{{ produto.nome }}</div>
+                            <div class="produto-stats">
+                                <span class="produto-quantidade">{{ produto.quantidade_vendida }} un</span>
+                                <span class="produto-valor">R$ {{ "%.2f"|format(produto.valor_total) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.relatorios-vendas-page {
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.relatorios-vendas-wrapper {
+    padding-top: 130px;
+    padding-bottom: 60px;
+}
+
+.relatorios-vendas-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.relatorios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.relatorios-header h1 {
+    font-size: 2.5rem;
+    color: #111;
+}
+
+.btn-voltar {
+    padding: 10px 20px;
+    background: #333;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.btn-voltar:hover {
+    background: #000;
+}
+
+/* Filtros */
+.filtros-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+.filtros-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #111;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.filtro-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.filtro-group input,
+.filtro-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.filtros-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-aplicar {
+    padding: 12px 25px;
+    background: #000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-aplicar:hover {
+    background: #333;
+}
+
+.btn-limpar {
+    padding: 12px 25px;
+    background: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.btn-limpar:hover {
+    background: #e0e0e0;
+}
+
+.btn-exportar {
+    padding: 12px 25px;
+    background: #00a650;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-exportar:hover {
+    background: #008f45;
+}
+
+/* Estatísticas */
+.estatisticas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.estatistica-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: 0.3s;
+}
+
+.estatistica-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.estatistica-icon {
+    font-size: 2.5rem;
+    width: 70px;
+    height: 70px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.estatistica-content h3 {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estatistica-valor {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #000;
+}
+
+/* Tabela */
+.vendas-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 40px;
+}
+
+.vendas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.vendas-header h3 {
+    font-size: 1.5rem;
+    color: #111;
+}
+
+.vendas-count {
+    background: #f0f0f0;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.vendas-table-container {
+    overflow-x: auto;
+}
+
+.vendas-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vendas-table th {
+    background: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.vendas-table td {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.vendas-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Badges */
+.badge-pagamento {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-pagamento.cartao { background: #e3f2fd; color: #1565c0; }
+.badge-pagamento.pix { background: #f3e5f5; color: #7b1fa2; }
+.badge-pagamento.boleto { background: #fff3e0; color: #ef6c00; }
+
+.badge-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-status.confirmado { background: #e8f5e9; color: #2e7d32; }
+.badge-status.pendente { background: #fff3e0; color: #f57c00; }
+.badge-status.cancelado { background: #ffebee; color: #c62828; }
+
+.btn-detalhes {
+    padding: 8px 15px;
+    background: #000;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: 0.3s;
+}
+
+.btn-detalhes:hover {
+    background: #333;
+}
+
+.vendas-vazio {
+    text-align: center;
+    padding: 50px 20px;
+    color: #666;
+}
+
+.vendas-vazio p {
+    font-size: 1.2rem;
+}
+
+/* Gráficos */
+.graficos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.grafico-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.grafico-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 25px;
+    color: #111;
+}
+
+.grafico-barras {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.barra-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.barra-label {
+    width: 80px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.barra-container {
+    flex: 1;
+    height: 25px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.barra {
+    height: 100%;
+    background: linear-gradient(90deg, #000, #333);
+    border-radius: 6px;
+    min-width: 2px;
+}
+
+.barra-valor {
+    width: 100px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.top-produtos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.produto-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.produto-item:hover {
+    background: #e9ecef;
+}
+
+.produto-nome {
+    font-weight: 500;
+    color: #333;
+}
+
+.produto-stats {
+    display: flex;
+    gap: 15px;
+}
+
+.produto-quantidade {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.produto-valor {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .relatorios-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .graficos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .barra-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .barra-label,
+    .barra-valor {
+        width: auto;
+        text-align: left;
+    }
+    
+    .produto-item {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .produto-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+</style>
+
+<div class="footer-spacer">
+    {% include 'layouts/footer.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</div>
+
+</body>

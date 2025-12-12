@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGDA CREW</title>
+    
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    {% include 'layouts/navbar.html' %}
+    
+
+<!-- BANNER / HERO -->
+<div class="hero-section">
+    <div class="hero-content">
+        <img src="static/images/magdawhitelogo.png" alt="Logo Magda" class="hero-logo">
+        <p>Moda acessível com estilo para todos os públicos.</p>
+        <a href="/produtos" class="hero-button">Explorar Produtos</a>
+    </div>
+</div>
+
+    <!-- BENEFÍCIOS -->
+    <section class="beneficios">
+        <div class="container">
+            <section class="beneficios-section">
+                <h2 class="destaques-title">Vantagens Exclusivas</h2>
+                <div class="beneficios-container">
+                    <div class="beneficio-card">
+                        <img src="static/images/envio.png" alt="Frete">
+                        <h5>Frete Grátis</h5>
+                        <p>Em compras a partir de R$599,90 para Joinville</p>
+                    </div>
+                    <div class="beneficio-card">
+                        <img src="static/images/dinheiro.png" alt="PIX">
+                        <h5>Pague com PIX</h5>
+                        <p>5% de desconto no pagamento via PIX</p>
+                    </div>
+                    <div class="beneficio-card">
+                        <img src="static/images/cartão.png" alt="Cartão">
+                        <h5>Parcele no Cartão</h5>
+                        <p>Até 3x sem juros no cartão de crédito</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <!-- SEÇÃO DE DESTAQUES -->
+    <section class="destaques-section">
+        <div class="container">
+            <h2 class="destaques-title">Destaques</h2>
+            
+            <div class="carrossel-container">
+                <!-- Botão Anterior -->
+                <button class="carrossel-btn carrossel-prev" aria-label="Slide anterior">
+                    ←
+                </button>
+                
+                <div class="carrossel-wrapper">
+                    <div class="carrossel-track" id="carrosselTrack">
+                        {% for produto in produtos_destaque %}
+                        <div class="carrossel-item">
+                            <div class="card">
+                                <a href="/visualizacao/{{produto.id}}">
+                                    <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}" alt="{{ produto.nome }}">
+                                </a>
+                                <div class="produto-nome">
+                                    {{ produto.nome }}
+                                </div>
+                                <div class="produto-preco">
+                                    R$ {{ "%.2f"|format(produto.preco) }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not produtos_destaque %}
+                        <div class="carrossel-item">    
+                            <div class="card">
+                                <img src="{{ url_for('static', filename='images/default.png') }}" 
+                                    alt="Sem produtos">
+                                <div class="produto-nome">Nenhum produto em destaque</div>
+                                <div class="produto-preco">R$ 0,00</div>
+                                <button class="btn-comprar" disabled>INDISPONÍVEL</button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Botão Próximo -->
+                <button class="carrossel-btn carrossel-next" aria-label="Próximo slide">
+                    →
+                </button>
+                
+                <!-- Indicadores -->
+                <div class="carrossel-indicators" id="carrosselIndicators">
+                    <!-- Os indicadores serão gerados pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+<script>
+// JavaScript para funcionalidade do carrossel
+document.addEventListener('DOMContentLoaded', function() {
+    const track = document.getElementById('carrosselTrack');
+    const items = document.querySelectorAll('.carrossel-item');
+    const prevBtn = document.querySelector('.carrossel-prev');
+    const nextBtn = document.querySelector('.carrossel-next');
+    const indicatorsContainer = document.getElementById('carrosselIndicators');
+    
+    if (!track || !items.length) return;
+    
+    // Configurações
+    const itemWidth = items[0].offsetWidth + 30; // width + gap
+    const visibleItems = Math.floor(track.parentElement.offsetWidth / itemWidth);
+    const totalItems = items.length;
+    const maxPosition = Math.max(0, totalItems - visibleItems);
+    
+    let currentPosition = 0;
+    
+    // Criar indicadores
+    for (let i = 0; i <= maxPosition; i++) {
+        const indicator = document.createElement('button');
+        indicator.className = 'carrossel-indicator';
+        if (i === 0) indicator.classList.add('active');
+        indicator.setAttribute('aria-label', `Ir para slide ${i + 1}`);
+        
+        indicator.addEventListener('click', () => {
+            goToSlide(i);
+        });
+        
+        indicator.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            indicator.classList.add('active');
+            setTimeout(() => indicator.classList.remove('active'), 200);
+            goToSlide(i);
+        });
+        
+        indicatorsContainer.appendChild(indicator);
+    }
+    
+    // Função para mover carrossel
+    function updateCarrossel() {
+        track.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
+        
+        // Atualizar indicadores
+        document.querySelectorAll('.carrossel-indicator').forEach((ind, index) => {
+            ind.classList.toggle('active', index === currentPosition);
+        });
+        
+        // Atualizar estados dos botões
+        prevBtn.classList.toggle('disabled', currentPosition === 0);
+        nextBtn.classList.toggle('disabled', currentPosition >= maxPosition);
+    }
+    
+    function goToSlide(position) {
+        currentPosition = Math.max(0, Math.min(position, maxPosition));
+        updateCarrossel();
+        
+        // Efeito de clique
+        const activeIndicator = indicatorsContainer.children[currentPosition];
+        activeIndicator.style.transform = 'scale(1.8)';
+        setTimeout(() => {
+            activeIndicator.style.transform = '';
+        }, 200);
+    }
+    
+    // Event listeners
+    prevBtn.addEventListener('click', () => {
+        if (currentPosition > 0) {
+            goToSlide(currentPosition - 1);
+            prevBtn.classList.add('active');
+            setTimeout(() => prevBtn.classList.remove('active'), 200);
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentPosition < maxPosition) {
+            goToSlide(currentPosition + 1);
+            nextBtn.classList.add('active');
+            setTimeout(() => nextBtn.classList.remove('active'), 200);
+        }
+    });
+    
+    // Efeitos de toque/click
+    prevBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        prevBtn.classList.add('active');
+    });
+    
+    prevBtn.addEventListener('touchend', () => {
+        setTimeout(() => prevBtn.classList.remove('active'), 200);
+    });
+    
+    nextBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        nextBtn.classList.add('active');
+    });
+    
+    nextBtn.addEventListener('touchend', () => {
+        setTimeout(() => nextBtn.classList.remove('active'), 200);
+    });
+    
+    // Suporte a arrastar no mobile
+    let startX = 0;
+    let currentTranslate = 0;
+    
+    track.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        currentTranslate = -currentPosition * itemWidth;
+    });
+    
+    track.addEventListener('touchmove', (e) => {
+        if (!startX) return;
+        const currentX = e.touches[0].clientX;
+        const diff = startX - currentX;
+        
+        if (Math.abs(diff) > 50) {
+            track.style.transform = `translateX(${currentTranslate - diff}px)`;
+        }
+    });
+    
+    track.addEventListener('touchend', (e) => {
+        if (!startX) return;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        
+        if (Math.abs(diff) > 50) {
+            if (diff > 0 && currentPosition < maxPosition) {
+                goToSlide(currentPosition + 1);
+            } else if (diff < 0 && currentPosition > 0) {
+                goToSlide(currentPosition - 1);
+            }
+        }
+        
+        startX = 0;
+        updateCarrossel();
+    });
+    
+    // Inicializar
+    updateCarrossel();
+    
+    // Ajustar na redimensionamento
+    window.addEventListener('resize', () => {
+        // Recalcular posição
+        const newVisibleItems = Math.floor(track.parentElement.offsetWidth / itemWidth);
+        const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
+        currentPosition = Math.min(currentPosition, newMaxPosition);
+        updateCarrossel();
+    });
+});
+</script>
+
+    <!-- FOOTER -->
+    {% include 'layouts/footer.html' %}
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
