@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identificação - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+</head>
+<body>
+    <!-- NAVBAR -->
+    {% include 'layouts/navbar.html' %}
+
+<section>
+    <div class="conta-wrapper">
+
+        <div class="conta-container">
+
+            <div class="card conta-card user-card">
+                <!-- Botão Editar Dados adicionado aqui -->
+                <div style="text-align: right; margin-bottom: 20px;">
+                
+                    <a href="/editar_usuario/{{ usuario.id }}" class="btn-editar">
+                        <img src="/static/images/editar.png" alt="Editar Usuário" style="width:20px; height:20px;">
+                    </a>
+                </div>
+
+                <h2>Meus dados</h2>
+                <p class="conta-descricao">Mantenha seus dados atualizados</p>
+
+                <div class="conta-info"><strong>Nome:</strong> {{ usuario.nome_completo }}</div>
+                <div class="conta-info"><strong>Email:</strong> {{ usuario.email }}</div>
+                <div class="conta-info"><strong>Telefone:</strong> {{ usuario.telefone }}</div>
+                <div class="conta-info"><strong>CPF:</strong> {{ usuario.cpf }}</div>
+                <div class="conta-info"><strong>Nascimento:</strong> {{ usuario.nascimento }}</div>
+                <div class="conta-info"><strong>Cadastrado em:</strong> {{ usuario.data_cadastro }}</div>
+
+                <a href="/logout" class="conta-btn">Finalizar Sessão</a>
+            </div>
+
+            <div class="card conta-card pedidos-card">
+                <h2>Meus pedidos</h2>
+                <p class="conta-descricao">Acompanhe seus pedidos</p>
+                <p class="conta-sem-pedidos">Você ainda não realizou nenhum pedido.</p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+    <!-- Footer -->
+    <div class="footer-spacer">
+        {% include 'layouts/footer.html' %}
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

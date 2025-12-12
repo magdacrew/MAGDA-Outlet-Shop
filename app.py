@@ -15,12 +15,9 @@ app.secret_key = 'MAGDA_GAE'
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-<<<<<<< HEAD
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
 
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 # Configurações de sessão
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_COOKIE_SECURE'] = False  # True em produção com HTTPS
@@ -527,6 +524,7 @@ def carrinho_page():
         conexao.close()
         
         return render_template("/pages/carrinho.html", 
+                             carrinho_count=len(itens_carrinho),
                              itens_carrinho=itens_carrinho,
                              subtotal=subtotal,
                              frete=frete,
@@ -649,7 +647,8 @@ def adicionar_carrinho(produto_id):
         """, (session['usuario_id'],))
         
         carrinho_count = cursor.fetchone()['count']
-        
+        session['carrinho_count'] = carrinho_count
+
         conexao.commit()
         cursor.close()
         conexao.close()
@@ -679,6 +678,8 @@ def remover_carrinho(item_id):
         conexao.commit()
         cursor.close()
         conexao.close()
+
+        session['carrinho_count'] = 0 # seilá calcula aqui Adrian cuzao
         
         flash("Item removido do carrinho", "success")
         return redirect("/carrinho")
@@ -913,11 +914,7 @@ def finalizar_compra():
         conexao.close()
         
         # Redirecionar para página de confirmação
-<<<<<<< HEAD
         return redirect(f"/")
-=======
-        return redirect(f"/confirmacao.html/{venda_id}")
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
         
 
         
@@ -2198,12 +2195,8 @@ def gerenciar_clientes():
 
     return render_template("/auth/gerenciar_clientes.html", clientes=clientes)
 
-<<<<<<< HEAD
 @app.route("/admin/editar_cliente/<int:id>", methods=["GET", "POST"])
 @admin_required
-=======
-@app.route("/editar_cliente/<int:id>", methods=["GET", "POST"])
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 def editar_cliente(id):
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
@@ -2254,7 +2247,6 @@ def editar_cliente(id):
 
     return render_template("auth/editar_cliente.html", cliente=cliente)
 
-<<<<<<< HEAD
 @app.route("/editar_usuario/<int:id>", methods=["GET", "POST"])
 def editar_usuario(id):
     conexao = conectar()
@@ -2306,8 +2298,6 @@ def editar_usuario(id):
 
     return render_template("auth/editar_usuario.html", cliente=cliente)
 
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 #/DESATIVAR USUARIO/
 @app.route("/admin/desativar_usuario/<int:id>")
 @admin_required

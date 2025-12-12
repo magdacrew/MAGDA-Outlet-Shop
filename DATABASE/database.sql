@@ -135,7 +135,6 @@ CREATE TABLE carrinho (
     FOREIGN KEY (cor_id) REFERENCES cores(id)
 );
 
-<<<<<<< HEAD
 -- Inserção de calças na tabela produtos
 INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque) VALUES
 ('Calça Jeans STONER', 
@@ -173,9 +172,14 @@ TRUE),
 'Black_Baggy_Jeans.webp', 
 TRUE),
 
+('Grey Track Pants', 
+'As Grey Track Pants oferecem conforto e mobilidade com um visual esportivo e moderno. Com tecido leve, acabamento clean e tonalidade cinza versátil, são perfeitas para compor looks casuais ou athleisure com estilo.', 
+419.90, 
+(SELECT id FROM categorias WHERE nome = 'Calcas'), 
+'Grey_Track_Pants.webp', 
+TRUE),
+
 -- Inserção de camisas na tabela produtos
-=======
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
 
 ('Horse Index Heavy Tee', 
 'A Horse Index Heavy Tee é confeccionada em Suedine preto, um tecido nobre, de textura aveludada e toque macio, com experiência de uso confortável e caimento estruturado.', 
@@ -184,7 +188,6 @@ TRUE),
 'Horse_Index_Heavy_Tee.webp', 
 TRUE),
 
-<<<<<<< HEAD
 ('Memories 2.0® Boxy Tee', 
 'A Memories 2.0® Boxy Tee Vermelha traz o caimento amplo perfeito, tecido macio e visual minimalista que destaca qualquer look. Uma peça versátil, confortável e com aquele toque street na medida certa.', 
 179.90, 
@@ -205,77 +208,61 @@ TRUE),
 (SELECT id FROM categorias WHERE nome = 'Camisetas'), 
 'Camiseta_ASHWALKER.webp', 
 TRUE),
-=======
--- 1) INSERIR PRODUTO
-INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
-VALUES (
-    'Calça Jeans STONER',
-    'A Calça Jeans STONER combina conforto e estilo com sua modelagem ampla e lavagem cinza estonada. Feita em jeans 100% algodão, possui zíper YKK, costura reforçada e detalhes personalizados que garantem durabilidade e um visual street autêntico. Ideal para quem busca um caimento solto e cheio de personalidade.',
-    359.90,          -- preço
-    3,             -- categoria_id 
-    'Calça_Jeans_STONER.webp',  -- nome do arquivo
-    TRUE          -- destaque (TRUE/FALSE)
-);
 
--- 2) PEGAR ID DO PRODUTO
-SET @produto_id = LAST_INSERT_ID();
+('Spectacle Heavy Tee', 
+'A Spectacle Heavy Tee entrega um visual clean e premium, feita com tecido mais pesado que garante estrutura e durabilidade. Com caimento impecável e estilo minimalista, é a escolha ideal para quem busca conforto e presença no look.', 
+239.90, 
+(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
+'Spectacle_Heavy_Tee.webp', 
+TRUE),
 
--- 3) INSERIR ESTOQUE (repita quantas variações quiser)
-INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
-VALUES
-(@produto_id, 1, 1, 10),  -- PP, Preto, 10 unidades
-(@produto_id, 2, 1, 10),  -- P, Preto, 15 unidades
-(@produto_id, 3, 1, 10);   -- M, Cinza, 8 unidades
-(@produto_id, 4, 1, 10);   -- G,
-(@produto_id, 5, 1, 10);   -- G,
+('Scimmie Classic Tee', 
+'A Scimmie Classic Tee traz o visual essencial da marca, unindo conforto e estilo em um design clean. Com caimento clássico e detalhes discretos, é perfeita para compor looks casuais com autenticidade.', 
+199.90, 
+(SELECT id FROM categorias WHERE nome = 'Camisetas'), 
+'Scimmie_Classic_Tee.webp', 
+TRUE),
 
+-- Inserção de casacos na tabela produtos
 
+('Grey Track Jacket', 
+'A Grey Track Jacket combina leveza, conforto e estilo esportivo. Com acabamento clean e tonalidade cinza versátil, oferece um visual moderno para o dia a dia, perfeita para compor looks casuais ou athleisure com personalidade.', 
+479.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'Grey_Track_Jacket.webp', 
+TRUE),
 
--- 1) INSERIR PRODUTO
-INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
-VALUES (
-    'Storm Grey Baggy Jeans',
-    'A Calça Jeans STONER combina conforto e estilo com sua modelagem ampla e lavagem cinza estonada. Feita em jeans 100% algodão, possui zíper YKK, costura reforçada e detalhes personalizados que garantem durabilidade e um visual street autêntico. Ideal para quem busca um caimento solto e cheio de personalidade.',
-    329.90,          -- preço
-    3,             -- categoria_id 
-    'Storm_Grey_Baggy_Jeans.webp',  -- nome do arquivo
-    TRUE          -- destaque (TRUE/FALSE)
-);
+('LIMBO MOSS GREEN / BLUE HOODIE BOXY', 
+'A Grey Track Jacket combina leveza, conforto e estilo esportivo. Com acabamento clean e tonalidade cinza versátil, oferece um visual moderno para o dia a dia, perfeita para compor looks casuais ou athleisure com personalidade.', 
+389.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'LIMBO_MOSS_GREEN_BLUE_HOODIE_BOXY.webp', 
+TRUE),
 
--- 2) PEGAR ID DO PRODUTO
-SET @produto_id = LAST_INSERT_ID();
+('Moletom TNB Mark I', 
+'O Moletom TNB Mark I preto entrega estilo minimalista com máximo conforto. Feito em tecido macio e encorpado, oferece um visual clean e versátil, ideal para compor looks casuais com personalidade.', 
+319.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'Moletom_TNB_Mark_I.webp', 
+TRUE),
 
--- 3) INSERIR ESTOQUE (repita quantas variações quiser)
-INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
-VALUES
-(@produto_id, 1, 3, 10),  -- PP, Preto, 10 unidades
-(@produto_id, 2, 3, 10),  -- P, Preto, 15 unidades
-(@produto_id, 3, 3, 10);   -- M, Cinza, 8 unidades
-(@produto_id, 4, 3, 10);   -- G,
-(@produto_id, 5, 3, 10);   -- G,
+('Crewneck Sentinel White', 
+'O Crewneck Sentinel White combina estilo clean e conforto premium. Com design minimalista e tecido macio, entrega um visual branco impecável e versátil, perfeito para compor looks modernos e elegantes no dia a dia.', 
+319.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'Crewneck_Sentinel_White.webp', 
+TRUE),
 
+('Crewneck Sentinel Black', 
+'O Crewneck Sentinel Black traz um visual minimalista e sofisticado, com acabamento preto impecável. Confortável e versátil, é perfeito para compor looks modernos com presença e estilo discreto.', 
+319.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'Crewneck_Sentinel_Black.webp', 
+TRUE),
 
-
--- 1) INSERIR PRODUTO
-INSERT INTO produtos (nome, descricao, preco, categoria_id, imagem, destaque)
-VALUES (
-    'Prime Baggy Jeans',
-    'A Prime Baggy Jeans azul claro combina um visual moderno com conforto absoluto. Com seu caimento solto e lavagem suave, ela entrega estilo urbano e versatilidade para qualquer ocasião, garantindo um look despojado e cheio de personalidade.',
-    349.90,          -- preço
-    3,             -- categoria_id 
-    'Prime_Baggy_Jeans.webp',  -- nome do arquivo
-    TRUE          -- destaque (TRUE/FALSE)
-);
-
--- 2) PEGAR ID DO PRODUTO
-SET @produto_id = LAST_INSERT_ID();
-
--- 3) INSERIR ESTOQUE (repita quantas variações quiser)
-INSERT INTO estoque (produto_id, tamanho_id, cor_id, quantidade)
-VALUES
-(@produto_id, 1, 5, 10),  -- PP, Preto, 10 unidades
-(@produto_id, 2, 5, 10),  -- P, Preto, 15 unidades
-(@produto_id, 3, 5, 10);   -- M, Cinza, 8 unidades
-(@produto_id, 4, 5, 10);   -- G,
-(@produto_id, 5, 5, 10);   -- G,
->>>>>>> 91459018b97a1654b2da0e6342b79c3d50917289
+('Mancha Hoodie', 
+'O Mancha Hoodie combina conforto e estilo urbano, trazendo um visual marcante com seu design clean e detalhes em destaque. Feito em tecido macio e encorpado, é perfeito para compor looks casuais com personalidade.', 
+389.90, 
+(SELECT id FROM categorias WHERE nome = 'Casacos'), 
+'Mancha_Hoodie.webp', 
+TRUE),

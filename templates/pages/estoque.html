@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="estoque-page">
+
+    {% include 'layouts/navbar.html' %}
+
+    <h2 class="destaques-title">Estoque</h2>
+    
+    <!-- BOTÃO CADASTRAR PRODUTO -->
+    <div class="cadastrar-produtos">
+        <a class="botao-cadastrar com-icone" href="/novo_produto">Cadastrar Produto</a>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL COM FILTRO E PRODUTOS -->
+    <div class="main-produtos-container">
+        
+        <!-- FILTRO NO CANTO ESQUERDO -->
+        <div class="filtro-lateral">
+            <h3>Filtrar Produtos</h3>
+            
+            <!-- Filtro por Categoria -->
+            <div class="filtro-grupo">
+                <h4>CATEGORIA</h4>
+                <div class="opcoes-filtro">
+                    {% for categoria in categorias %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="cat{{ categoria.id }}" name="categoria" value="{{ categoria.id }}">
+                        <label for="cat{{ categoria.id }}">{{ categoria.nome }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Filtro por Tamanho -->
+            <div class="filtro-grupo">
+                <h4>TAMANHO</h4>
+                <div class="opcoes-filtro">
+                    {% for tamanho in tamanhos %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="tamanho{{ tamanho.id }}" name="tamanho" value="{{ tamanho.id }}">
+                        <label for="tamanho{{ tamanho.id }}">{{ tamanho.nome }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Filtro por Cor -->
+            <div class="filtro-grupo">
+                <h4>COR</h4>
+                <div class="opcoes-filtro">
+                    {% for cor in cores %}
+                    <div class="opcao-item">
+                        <input type="checkbox" id="cor{{ cor.id }}" name="cor" value="{{ cor.id }}">
+                        <label for="cor{{ cor.id }}">{{ cor.nome }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Filtro por Preço -->
+            <div class="filtro-grupo">
+                <h4>FAIXA DE PREÇO</h4>
+                <div class="opcoes-filtro">
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco1" name="preco" value="0-50">
+                        <label for="preco1">Até R$ 50,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco2" name="preco" value="50-100">
+                        <label for="preco2">R$ 50,00 - R$ 100,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco3" name="preco" value="100-200">
+                        <label for="preco3">R$ 100,00 - R$ 200,00</label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="checkbox" id="preco4" name="preco" value="200+">
+                        <label for="preco4">Acima de R$ 200,00</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="botoes-filtro">
+                <button type="button" class="btn-aplicar" onclick="aplicarFiltros()">Aplicar Filtros</button>
+                <button type="button" class="btn-limpar" onclick="limparFiltros()">Limpar</button>
+            </div>
+        </div>
+
+        <!-- PRODUTOS NO LADO DIREITO -->
+        <div class="estoque-produtos-container">
+            
+            <!-- SEÇÃO DE PRODUTOS ATIVOS -->
+            {% if produtos_ativos %}
+            <div class="estoque-secao">
+                <h3 class="estoque-secao-titulo">Produtos Ativos</h3>
+                <div class="estoque-grid-produtos">
+                    {% for produto in produtos_ativos %}
+                    <div class="estoque-card">
+                        <div class="estoque-card-actions">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                                <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
+                            </a>
+                            <a href="/admin/desativar_produto/{{ produto.id }}" class="estoque-btn-excluir" onclick="return confirm('Tem certeza que deseja desativar este produto?')">
+                                <img src="/static/images/excluir.png" alt="Botão de excluir produto" style="width:20px; height:20px;">
+                            </a>
+                        </div>
+                        <a href="/visualizacao/{{produto.id}}">
+                            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                            alt="Produto" class="estoque-produto-imagem">
+                        </a>
+                        <div class="estoque-produto-nome">{{ produto.nome }}</div>
+                        <div class="estoque-produto-status ativo">ATIVO</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SEÇÃO DE PRODUTOS DESATIVADOS -->
+            {% if produtos_desativados %}
+            <div class="estoque-secao">
+                <h3 class="estoque-secao-titulo">Produtos Desativados</h3>
+                <div class="estoque-grid-produtos">
+                    {% for produto in produtos_desativados %}
+                    <div class="estoque-card estoque-card-desativado">
+                        <div class="estoque-card-actions">
+                            <a href="/admin/editar_produto/{{ produto.id }}" class="estoque-btn-editar">
+                                <img src="/static/images/editar.png" alt="Botão de editar produto" style="width:20px; height:20px;">
+                            </a>
+                            <a href="/admin/reativar_produto/{{ produto.id }}" class="estoque-btn-reativar" onclick="return confirm('Tem certeza que deseja reativar este produto?')">
+                                <img src="/static/images/reativar.png" alt="Botão de reativar produto" style="width:20px; height:20px;">
+                            </a>
+                        </div>
+                        <a href="/visualizacao/{{produto.id}}">
+                            <img src="{{ url_for('static', filename='uploads/' ~ produto.imagem) if produto.imagem else url_for('static', filename='images/default.png') }}"
+                            alt="Produto" class="estoque-produto-imagem">
+                        </a>
+                        <div class="estoque-produto-nome">{{ produto.nome }}</div>
+                        <div class="estoque-produto-status desativado">DESATIVADO</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- MENSAGEM SE NÃO HOUVER PRODUTOS -->
+            {% if not produtos_ativos and not produtos_desativados %}
+            <div class="estoque-sem-produtos">
+                <p>Nenhum produto encontrado com os filtros selecionados.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="footer-spacer">
+        {% include 'layouts/footer.html' %}
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <script>
+    function aplicarFiltros() {
+        // Coletar filtros selecionados
+        const categorias = Array.from(document.querySelectorAll('input[name="categoria"]:checked'))
+            .map(cb => cb.value);
+        const tamanhos = Array.from(document.querySelectorAll('input[name="tamanho"]:checked'))
+            .map(cb => cb.value);
+        const cores = Array.from(document.querySelectorAll('input[name="cor"]:checked'))
+            .map(cb => cb.value);
+        const precos = Array.from(document.querySelectorAll('input[name="preco"]:checked'))
+            .map(cb => cb.value);
+        
+        // Construir URL com parâmetros
+        const params = new URLSearchParams();
+        
+        categorias.forEach(cat => params.append('categoria', cat));
+        tamanhos.forEach(tam => params.append('tamanho', tam));
+        cores.forEach(cor => params.append('cor', cor));
+        precos.forEach(preco => params.append('preco', preco));
+        
+        // Redirecionar para a mesma página com filtros
+        window.location.href = '/estoque?' + params.toString();
+    }
+
+    function limparFiltros() {
+        // Limpar checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        // Redirecionar para página sem filtros
+        window.location.href = '/estoque';
+    }
+
+    // Função para marcar os filtros ativos quando a página carrega
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Marcar categorias
+        urlParams.getAll('categoria').forEach(catId => {
+            const checkbox = document.querySelector(`input[name="categoria"][value="${catId}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar tamanhos
+        urlParams.getAll('tamanho').forEach(tamId => {
+            const checkbox = document.querySelector(`input[name="tamanho"][value="${tamId}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar cores
+        urlParams.getAll('cor').forEach(corId => {
+            const checkbox = document.querySelector(`input[name="cor"][value="${corId}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        // Marcar preços
+        urlParams.getAll('preco').forEach(preco => {
+            const checkbox = document.querySelector(`input[name="preco"][value="${preco}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <title>Login - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="static/style.css">
+    <link rel="icon" href="static/images/simple_magda_logo.png" type="image/png">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    {% include 'layouts/navbar.html' %}
+
+<section class="section">
+    <div class="login-container">
+
+        <!-- Mensagens Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h2>Entrar na conta</h2>
+
+        <form action="/login" method="POST">
+
+            <label>E-mail:</label>
+            <input type="email" name="email" value="{{ request.form.email if request.form }}" required>
+
+            <label>Senha:</label>
+            <input type="password" name="senha" required>
+
+            <button type="submit">Entrar</button>
+            <div class="bottom-link">
+                Não possui conta? <a href="/cadastro">Criar conta</a>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<!-- Footer -->
+{% include 'layouts/footer.html' %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
