@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Venda - MAGDA CREW</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <link rel="icon" href="/static/images/simple_magda_logo.png" type="image/png">
+</head>
+
+<body class="relatorios-vendas-page">
+
+    {% include 'layouts/navbar.html' %}
+    
+<div class="detalhes-venda-page">
+    <div class="detalhes-venda-wrapper">
+        <div class="detalhes-venda-container">
+            <div class="detalhes-header">
+                <a href="{{ url_for('relatorios_vendas') }}" class="btn-voltar">← Voltar</a>
+                <h1>📋 Detalhes da Venda #{{ venda.id }}</h1>
+                <div class="venda-status {{ venda.status }}">
+                    {{ venda.status|title }}
+                </div>
+            </div>
+            
+            <div class="detalhes-grid">
+                <!-- Informações da Venda -->
+                <div class="detalhes-card">
+                    <h3>📦 Informações da Venda</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Data:</label>
+                            <span>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Valor Total:</label>
+                            <span class="valor-destaque">R$ {{ "%.2f"|format(venda.valor_total) }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Subtotal:</label>
+                            <span>R$ {{ "%.2f"|format(venda.subtotal) }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Frete:</label>
+                            <span>R$ {{ "%.2f"|format(venda.valor_frete) }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Forma Pagamento:</label>
+                            <span class="badge-pagamento {{ venda.forma_pagamento }}">
+                                {{ venda.forma_pagamento|title }}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <label>CPF/CNPJ NF:</label>
+                            <span>{{ venda.cpf_cnpj_nota or 'Não informado' }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Informações do Cliente -->
+                <div class="detalhes-card">
+                    <h3>👤 Cliente</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Nome:</label>
+                            <span>{{ venda.nome_completo }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span>{{ venda.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Telefone:</label>
+                            <span>{{ venda.telefone or 'Não informado' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>CPF:</label>
+                            <span>{{ venda.cpf or 'Não informado' }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Endereço de Entrega -->
+                {% if venda.logradouro %}
+                <div class="detalhes-card">
+                    <h3>📍 Endereço de Entrega</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Destinatário:</label>
+                            <span>{{ venda.destinatario }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Endereço:</label>
+                            <span>{{ venda.logradouro }}, {{ venda.numero }}</span>
+                        </div>
+                        {% if venda.complemento %}
+                        <div class="info-item">
+                            <label>Complemento:</label>
+                            <span>{{ venda.complemento }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <label>Bairro:</label>
+                            <span>{{ venda.bairro }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Cidade/UF:</label>
+                            <span>{{ venda.cidade }}/{{ venda.estado }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>CEP:</label>
+                            <span>{{ venda.cep }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Itens da Venda -->
+            <div class="itens-card">
+                <h3>🛍️ Itens da Venda</h3>
+                
+                {% if itens %}
+                <div class="itens-table-container">
+                    <table class="itens-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Tamanho</th>
+                                <th>Cor</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unit.</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            <tr>
+                                <td>
+                                    <div class="produto-info">
+                                        {% if item.imagem %}
+                                        <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" 
+                                             alt="{{ item.produto_nome }}"
+                                             class="produto-imagem">
+                                        {% endif %}
+                                        <div class="produto-nome">{{ item.produto_nome }}</div>
+                                    </div>
+                                </td>
+                                <td>{{ item.tamanho or 'N/A' }}</td>
+                                <td>{{ item.cor or 'N/A' }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>R$ {{ "%.2f"|format(item.preco_unitario) }}</td>
+                                <td class="subtotal">R$ {{ "%.2f"|format(item.quantidade * item.preco_unitario) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="total-label">Total da Venda:</td>
+                                <td class="total-valor">R$ {{ "%.2f"|format(venda.valor_total) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p class="itens-vazio">Nenhum item encontrado</p>
+                {% endif %}
+            </div>
+            
+            <!-- Ações -->
+            <div class="acoes-card">
+                <h3>⚡ Ações</h3>
+                <div class="acoes-buttons">
+                    <a href="{{ url_for('relatorios_vendas') }}" class="btn-acao">Voltar para Relatórios</a>
+                    <button onclick="window.print()" class="btn-acao">🖨️ Imprimir</button>
+                    {% if venda.status == 'pendente' %}
+                    <button class="btn-acao btn-confirmar">✅ Confirmar Venda</button>
+                    <button class="btn-acao btn-cancelar">❌ Cancelar Venda</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.detalhes-venda-page {
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+.detalhes-venda-wrapper {
+    padding-top: 130px;
+    padding-bottom: 60px;
+}
+
+.detalhes-venda-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.detalhes-header {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.detalhes-header h1 {
+    font-size: 2.2rem;
+    color: #111;
+    flex: 1;
+}
+
+.btn-voltar {
+    padding: 10px 20px;
+    background: #333;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.btn-voltar:hover {
+    background: #000;
+}
+
+.venda-status {
+    padding: 10px 25px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.venda-status.confirmado {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.venda-status.pendente {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.venda-status.cancelado {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* Grid de Detalhes */
+.detalhes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.detalhes-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.detalhes-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    color: #111;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f8f8;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.info-item span {
+    color: #333;
+    font-weight: 500;
+}
+
+.valor-destaque {
+    font-size: 1.3rem;
+    font-weight: 700 !important;
+    color: #000 !important;
+}
+
+.badge-pagamento {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.badge-pagamento.cartao { background: #e3f2fd; color: #1565c0; }
+.badge-pagamento.pix { background: #f3e5f5; color: #7b1fa2; }
+.badge-pagamento.boleto { background: #fff3e0; color: #ef6c00; }
+
+/* Itens da Venda */
+.itens-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 40px;
+}
+
+.itens-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    color: #111;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.itens-table-container {
+    overflow-x: auto;
+}
+
+.itens-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.itens-table th {
+    background: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.itens-table td {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.itens-table tr:hover {
+    background: #f8f9fa;
+}
+
+.produto-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.produto-imagem {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.produto-nome {
+    font-weight: 500;
+    color: #333;
+}
+
+.subtotal {
+    font-weight: 600;
+    color: #000;
+}
+
+.itens-table tfoot {
+    background: #f8f9fa;
+    border-top: 2px solid #e9ecef;
+}
+
+.total-label {
+    text-align: right;
+    font-weight: 600;
+    color: #555;
+    padding: 20px 15px;
+}
+
+.total-valor {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #000;
+    padding: 20px 15px;
+}
+
+.itens-vazio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Ações */
+.acoes-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.acoes-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    color: #111;
+}
+
+.acoes-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-acao {
+    padding: 12px 25px;
+    background: #000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-acao:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.btn-confirmar {
+    background: #00c853;
+}
+
+.btn-confirmar:hover {
+    background: #00b248;
+}
+
+.btn-cancelar {
+    background: #ff4444;
+}
+
+.btn-cancelar:hover {
+    background: #e53935;
+}
+
+@media (max-width: 768px) {
+    .detalhes-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .detalhes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acoes-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-acao {
+        width: 100%;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+</style>
+<div class="footer-spacer">
+    {% include 'layouts/footer.html' %}
+</div>
+
+</body>

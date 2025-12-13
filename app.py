@@ -470,28 +470,68 @@ def usuario():
             WHERE id = %s
         """, (session["usuario_id"],))
 
-        cursor.execute("""
-            SELECT i.*, p.nome, p.imagem, p.preco,
-                (i.quantidade * p.preco) as subtotal
-            FROM itens_venda i
-            JOIN produtos p ON c.produto_id = p.id
-            WHERE c.usuario_id = %s AND p.ativo = TRUE
-            ORDER BY c.data_adicao DESC
-        """, (session['usuario_id'],))
-
-        it = cursor.fetchone()
-
-        cursor.close()
-        conexao.close()
+        usuario = cursor.fetchone()
 
         if not usuario:
             flash("Usuário não encontrado.", "error")
             return redirect("/login")
 
-        return render_template("/auth/usuario.html", usuario=usuario)
+        # 2. Buscar os pedidos do usuário
+        cursor.execute("""
+            SELECT 
+                v.id,
+                v.valor_total,
+                v.subtotal,
+                v.valor_frete,
+                v.status,
+                v.forma_pagamento,
+                v.frete_tipo,
+                DATE_FORMAT(v.data_venda, '%%d/%%m/%%Y %%H:%%i') as data_formatada,
+                v.data_venda,
+                ev.cidade,
+                ev.estado,
+                ev.destinatario,
+                COUNT(iv.id) as quantidade_itens
+            FROM vendas v
+            LEFT JOIN enderecos_venda ev ON v.id = ev.venda_id
+            LEFT JOIN itens_venda iv ON v.id = iv.venda_id
+            WHERE v.usuario_id = %s
+            GROUP BY v.id, v.valor_total, v.subtotal, v.valor_frete, v.status, 
+                     v.forma_pagamento, v.frete_tipo, v.data_venda, ev.cidade, 
+                     ev.estado, ev.destinatario
+            ORDER BY v.data_venda DESC
+        """, (session["usuario_id"],))
+        
+        pedidos = cursor.fetchall()
+        
+        # 3. Opcional: Buscar itens de cada pedido para exibir detalhes
+        pedidos_com_itens = []
+        for pedido in pedidos:
+            cursor.execute("""
+                SELECT 
+                    iv.produto_id,
+                    p.nome as produto_nome,
+                    iv.quantidade,
+                    iv.preco_unitario,
+                    iv.tamanho,
+                    iv.cor,
+                    (iv.quantidade * iv.preco_unitario) as subtotal_item
+                FROM itens_venda iv
+                INNER JOIN produtos p ON iv.produto_id = p.id
+                WHERE iv.venda_id = %s
+            """, (pedido['id'],))
+            
+            itens = cursor.fetchall()
+            pedido['itens'] = itens
+            pedidos_com_itens.append(pedido)
+
+        cursor.close()
+        conexao.close()
+
+        return render_template("/auth/usuario.html", usuario=usuario, pedidos=pedidos_com_itens)
 
     except Exception as e:
-        flash(f"Erro ao carregar informações: {str(e)}", "error")
+        print(f"Erro ao carregar informações: {str(e)}")
         return redirect("/")
 
 # ==================== CARRINHO DE COMPRAS ====================
@@ -499,10 +539,10 @@ def usuario():
 @app.route("/carrinho")
 def carrinho_page():
         
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
     try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-    
         # Buscar itens do carrinho
         cursor.execute("""
             SELECT c.*, p.nome, p.imagem, p.descricao, p.preco,
@@ -2251,6 +2291,9 @@ def editar_cliente(id):
 def editar_usuario(id):
     conexao = conectar()
     cursor = conexao.cursor(dictionary=True)
+
+    if (id != session.get('usuario_id')) and (not session.get('is_admin')):
+        return redirect("/")
 
     # Buscar cliente
     cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))

@@ -41,8 +41,20 @@
 
             <div class="card conta-card pedidos-card">
                 <h2>Meus pedidos</h2>
+                {% if pedidos %}
+                    {% for pedido in pedidos %}
+                        <div class="pedido-item">
+                            <div><strong>Número do Pedido:</strong> {{ pedido.id }}</div>
+                            <div><strong>Data do Pedido:</strong> {{ pedido.data_venda }}</div>
+                            <div><strong>Status:</strong> {{ pedido.status }}</div>
+                            <div><strong>Total:</strong> R$ {{ "%.2f"|format(pedido.subtotal) }}</div>
+                            <a href="/detalhes_pedido/{{ pedido.id }}" class="detalhes-pedido-link">Ver Detalhes</a>
+                        </div>
+                    {% endfor %}
                 <p class="conta-descricao">Acompanhe seus pedidos</p>
-                <p class="conta-sem-pedidos">Você ainda não realizou nenhum pedido.</p>
+                {% else %}
+                    <p class="conta-sem-pedidos">Você ainda não realizou nenhum pedido.</p>
+                {% endif %}
             </div>
 
         </div>
